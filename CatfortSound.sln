@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35825.156
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CatfortSound", "CatfortSound.csproj", "{CD2F59FB-49CF-4735-B494-A88310C842F3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CD2F59FB-49CF-4735-B494-A88310C842F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD2F59FB-49CF-4735-B494-A88310C842F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD2F59FB-49CF-4735-B494-A88310C842F3}.Debug|x86.ActiveCfg = Debug|x86
+		{CD2F59FB-49CF-4735-B494-A88310C842F3}.Debug|x86.Build.0 = Debug|x86
+		{CD2F59FB-49CF-4735-B494-A88310C842F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD2F59FB-49CF-4735-B494-A88310C842F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD2F59FB-49CF-4735-B494-A88310C842F3}.Release|x86.ActiveCfg = Release|x86
+		{CD2F59FB-49CF-4735-B494-A88310C842F3}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {66AE24A2-F3B5-4F00-9530-93DD3B55B5A1}
+	EndGlobalSection
+EndGlobal
