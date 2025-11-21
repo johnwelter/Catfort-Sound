@@ -7,19 +7,22 @@
         mc:Ignorable="d"
         Title="Catfort Sound
         " Height="239" Width="443">
+    <Window.Resources>
+        <Thickness x:Key="tbMargin">0, 10, 0, 0</Thickness>
+    </Window.Resources>
     <Grid>
 
         <StackPanel Margin="10,10,10,10">
             <StackPanel.Resources>
                 <Style TargetType="{x:Type Slider}">
-                    <Setter Property="Margin" Value="0, 10, 0, 0"/>
+                    <Setter Property="Margin" Value="{StaticResource tbMargin}"/>
                 </Style>
             </StackPanel.Resources>
-            <Slider x:Name="sq1_vol" HorizontalAlignment="Left" Width="350" Maximum="1"/>
-            <Slider x:Name="sq2_vol" HorizontalAlignment="Left" Width="350" Maximum="1"/>
-            <Slider x:Name="tri_vol" HorizontalAlignment="Left" Width="350" Maximum="1"/>
-            <Slider x:Name="noi_vol" HorizontalAlignment="Left" Width="350" Maximum="1"/>
-            <Slider x:Name="dmc_vol" HorizontalAlignment="Left" Width="350" Maximum="1"/>
+            <Slider x:Name="sq1_vol" HorizontalAlignment="Left" Width="350" Maximum="1" TickPlacement="BottomRight" TickFrequency="0.1"/>
+            <Slider x:Name="sq2_vol" HorizontalAlignment="Left" Width="350" Maximum="1" TickPlacement="BottomRight" TickFrequency="0.1"/>
+            <Slider x:Name="tri_vol" HorizontalAlignment="Left" Width="350" Maximum="1" TickPlacement="BottomRight" TickFrequency="0.1"/>
+            <Slider x:Name="noi_vol" HorizontalAlignment="Left" Width="350" Maximum="1" TickPlacement="BottomRight" TickFrequency="0.1"/>
+            <Slider x:Name="dmc_vol" HorizontalAlignment="Left" Width="350" Maximum="1" TickPlacement="BottomRight" TickFrequency="0.1"/>
         </StackPanel>
 
     </Grid>
