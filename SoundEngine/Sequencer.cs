@@ -60,10 +60,10 @@ namespace CatfortSound.SoundEngine
         {
             new byte[] { 7, 8, 9, 10, 11, 12, 13, 14, 15, 15, 15, 14, 14, 14, 13, 13, 13, 12, 12, 12, 11, 11, 11, 10, 10, 10, 9, 9, 9, 8, 8, 8, 7, 7, 7, 6, 6, 6, 5, 5, 5, 4, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 0 },
             new byte[] { 15, 15, 15, 11, 11, 11, 7, 7, 7, 5, 5, 5 },
-            new byte[] { 15, 15, 15, 11, 7, 0 },
+            new byte[] { 15, 6, 2, 0 },
             new byte[] { 10, 11, 12, 13, 14, 15, 0, 0, 10, 10, 10, 10, 10, 0, 0, 5, 5, 5, 5, 0, 0, 2, 2, 1, 1, 1, 0},
             new byte[] { 15 },
-            new byte[] { 15, 15, 15, 15, 11, 11, 11, 7, 7, 0}
+            new byte[] { 15, 9, 8, 6, 4, 3, 2, 1, 0}
         };
 
         public List<byte[]> ModEffects = new()
@@ -89,19 +89,6 @@ namespace CatfortSound.SoundEngine
             new byte[] { 0 },
             new byte[] { 0, 0, 0, 0, 0, 1, 1, 1, 2 },
         };
-
-
-        private const int TEST_TEMPO32 = 3;
-        //public readonly byte[] SqTest = { Ins.VolEffect, 0x03, Ins.ModEffect, 0x00, Ins.DutyEffect, 0x00,
-        //                                            Len.l8, Notes.A2, Notes.E4, Notes.G3, Notes.Fs3, Notes.D4, Notes.G3,
-        //                                            Notes.D3, Notes.E4, Notes.G3, Notes.Fs3, Notes.D4, Notes.G3,
-        //                                            Notes.C3, Notes.B3, Len.l4, Notes.G3, Notes.B2,
-        //                                            Len.l8, Notes.A2, Notes.E4, Notes.G3, Notes.Fs3, Notes.D4, Notes.G3,
-        //                                            Notes.A2, Notes.E4, Notes.A3, Notes.E3, Notes.B3, Notes.A3,
-        //                                            Notes.A2, Notes.E4, Notes.G3, Notes.Fs3, Notes.D4, Notes.G3,
-        //                                            Notes.A2, Notes.E4, Notes.A3, Notes.E3, Notes.B3, Notes.A3,
-        //                                            Ins.Loop
-        //};
 
         public readonly byte[] SqTest = { Ins.VolEffect, 0x03, Ins.ModEffect, 0x00, Ins.DutyEffect, 0x00,
                                                     Len.l8, Notes.A2, Notes.E4, Notes.G3, Notes.Fs3, Notes.D4, Notes.G3,
@@ -130,12 +117,12 @@ namespace CatfortSound.SoundEngine
 
 
         public readonly byte[] NoiseTest = { Ins.VolEffect, 0x02, Ins.ModEffect, 0x00, 
-                                             Len.l8, Notes.A7, Notes.A7, Ins.VolEffect, 0x05, Notes.A7, Ins.VolEffect, 0x02, Notes.A7, Notes.A7, Notes.A7,
-                                             Len.l4, Ins.VolEffect, 0x05, Notes.A7, Notes.A7, Notes.A7, Ins.Loop
+                                             Len.l8, 0x4, 0x4, Ins.VolEffect, 0x05, 0x4, Ins.VolEffect, 0x02, 0x4, 0x4, 0x4,
+                                             Len.l4, Ins.VolEffect, 0x05, 0x4, 0x4, 0x4, Ins.Loop
         
         };
 
-        public readonly byte[] DMCTest = { Len.l4, 0x01, Len.l8, 0x01, Len.l4, 0x00, Len.l8, 0x00, Len.l4, 0x01, Len.l8, 0x01, Len.l16, 0x01, 0x01, Len.l4, 0x00, Ins.Loop 
+        public readonly byte[] DMCTest = { Len.l4, 0x1B, Len.l8, 0x1B, Len.l4, 0x0B, Len.l8, 0x0B, Len.l4, 0x1B, Len.l8, 0x1B, Len.l16, 0x1B, 0x1B, Len.l4, 0x0B, Ins.Loop 
         };
 
 

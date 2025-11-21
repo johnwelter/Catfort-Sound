@@ -86,8 +86,11 @@ namespace CatfortSound.SoundEngine
 
         internal void TriggerDMC(int sample)
         {
+            int dmcIndex = sample >> 4;
+            int pitch = sample & 15;
+
             DMC? dmc = Channels[DMC] as DMC;
-            dmc?.SetSample(sample);
+            dmc?.SetSample(dmcIndex, pitch);
         }
     }
 }

@@ -21,6 +21,8 @@ namespace CatfortSound.SoundEngine
         private int byteIndex = -1;
         private int bitIndex = 0;
 
+        private int m_samplePitch = 0xB;
+
         public List<byte[]> SampleList = new List<byte[]>();
 
         private readonly byte[] EB0_Kick = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xb6, 0x42, 0x04, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
@@ -52,13 +54,18 @@ namespace CatfortSound.SoundEngine
     0xA4,
 };
 
+      
+        public readonly int[] timerLut =
+        {
+            428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54
+        };
 
         public DMC()
         {
             SampleList.Add(EB0_Snare);
             SampleList.Add(EB0_Kick);
         }
-        public virtual void SetSample(int sample)
+        public virtual void SetSample(int sample, int pitch)
         {
             //m_pitch = pitch;
             //Effects.ResetEffects();
@@ -66,6 +73,7 @@ namespace CatfortSound.SoundEngine
             byteIndex = 0;
             bitIndex = 0;
             LoadedSample = sample;
+            m_samplePitch = pitch;
             CurrentSample = 0;
         }
 
@@ -79,7 +87,7 @@ namespace CatfortSound.SoundEngine
             {
                 return 0;
             }
-            Clock(APUConstants.CPU_CLOCKS_PER_SAMPLE, 0x080);
+            Clock(APUConstants.CPU_CLOCKS_PER_SAMPLE, timerLut[m_samplePitch]);
             return CurrentSample * 10f;
         }
 
@@ -94,7 +102,7 @@ namespace CatfortSound.SoundEngine
             {
                 bitIndex %= 8;
                 byteIndex++;
-                if (byteIndex == dmc.Length)
+                if (byteIndex >= dmc.Length)
                 {
                     byteIndex = -1;
                 }
