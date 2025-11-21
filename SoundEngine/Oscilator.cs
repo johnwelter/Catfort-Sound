@@ -9,7 +9,7 @@ namespace CatfortSound.SoundEngine
 {
     class Oscilator : Channel
     {
-        protected int m_pitch;
+        protected int m_pitch = Notes.rest;
 
         public EffectStack Effects = new EffectStack();
 

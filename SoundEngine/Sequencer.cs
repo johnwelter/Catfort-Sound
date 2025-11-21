@@ -115,6 +115,9 @@ namespace CatfortSound.SoundEngine
         
         };
 
+        public readonly byte[] TriTest = { Notes.rest, Ins.Loop 
+        };
+
 
         public readonly byte[] NoiseTest = { Ins.VolEffect, 0x02, Ins.ModEffect, 0x00, 
                                              Len.l8, 0x4, 0x4, Ins.VolEffect, 0x05, 0x4, Ins.VolEffect, 0x02, 0x4, 0x4, 0x4,
@@ -153,10 +156,9 @@ namespace CatfortSound.SoundEngine
             apuReference = apu;
             sqTrack = new(this, SqTest, Mixer.SQUARE_1);
             sq2Track = new(this, Sq2Test, Mixer.SQUARE_2);
+            triTrack = new(this, TriTest, Mixer.TRIANGLE);
             noiseTrack = new(this, NoiseTest, Mixer.NOISE);
             dmcTrack = new(this, DMCTest, Mixer.DMC);
-            //TriTrack = new(this, TriTest, Mixer.SQUARE_1);
-            //NoiseTrack = = new(this, NoiseTest, Mixer.SQUARE_1);
         }
 
         public int TickSequence()
@@ -170,6 +172,7 @@ namespace CatfortSound.SoundEngine
                 dirtyFlags = 128;
             }
             sq2Track.TickTrack(Tempo32);
+            triTrack.TickTrack(Tempo32);
             noiseTrack.TickTrack(Tempo32);
             dmcTrack.TickTrack(Tempo32);
 

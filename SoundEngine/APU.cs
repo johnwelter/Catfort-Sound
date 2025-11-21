@@ -132,6 +132,14 @@ namespace CatfortSound.SoundEngine
             }
             outputArray.Clear();
         }
+
+        public void UpdateVolume(int channel, float volume)
+        {
+            if(mixer is not null)
+            {
+                mixer.ChannelVolumes[channel] = volume;
+            }
+        }
     }
 
     class APUConstants

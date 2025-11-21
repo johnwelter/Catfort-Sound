@@ -67,12 +67,12 @@ namespace CatfortSound.SoundEngine
 
             for (int i = 0; i < samplesThisFrame; i++)
             {
-                float square1 = Channels[SQUARE_1].GenerateSample();
-                float square2 = Channels[SQUARE_2].GenerateSample();
-                float triangle = Channels[TRIANGLE].GenerateSample() * 0;
-                float noise = Channels[NOISE].GenerateSample();
-                float dmc = Channels[DMC].GenerateSample();
-                //float fds = Channels[FDS].GenerateSample();
+                float square1 = Channels[SQUARE_1].GenerateSample() * ChannelVolumes[SQUARE_1];
+                float square2 = Channels[SQUARE_2].GenerateSample() * ChannelVolumes[SQUARE_2];
+                float triangle = Channels[TRIANGLE].GenerateSample() * ChannelVolumes[TRIANGLE];
+                float noise = Channels[NOISE].GenerateSample() * ChannelVolumes[NOISE];
+                float dmc = Channels[DMC].GenerateSample() * ChannelVolumes[DMC];
+                //float fds = Channels[FDS].GenerateSample() * ChannelVolumes[FDS];
 
                 float pulseOut = 0.00752f * (square1 + square2);
 

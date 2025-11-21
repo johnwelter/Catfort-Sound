@@ -5,6 +5,22 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CatfortSound"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid/>
+        Title="Catfort Sound
+        " Height="239" Width="443">
+    <Grid>
+
+        <StackPanel Margin="10,10,10,10">
+            <StackPanel.Resources>
+                <Style TargetType="{x:Type Slider}">
+                    <Setter Property="Margin" Value="0, 10, 0, 0"/>
+                </Style>
+            </StackPanel.Resources>
+            <Slider x:Name="sq1_vol" HorizontalAlignment="Left" Width="350" Maximum="1"/>
+            <Slider x:Name="sq2_vol" HorizontalAlignment="Left" Width="350" Maximum="1"/>
+            <Slider x:Name="tri_vol" HorizontalAlignment="Left" Width="350" Maximum="1"/>
+            <Slider x:Name="noi_vol" HorizontalAlignment="Left" Width="350" Maximum="1"/>
+            <Slider x:Name="dmc_vol" HorizontalAlignment="Left" Width="350" Maximum="1"/>
+        </StackPanel>
+
+    </Grid>
 </Window>

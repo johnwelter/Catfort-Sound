@@ -47,20 +47,26 @@ public partial class MainWindow : Window
         NoteRoll = new Sequencer(AudioProcessor);
         InitAudioUpdate();
         CompositionTarget.Rendering += RenderUpdate;
+
+        sq1_vol.Value = 1;
+        sq2_vol.Value = 1;
+        tri_vol.Value = 1;
+        noi_vol.Value = 1;
+        dmc_vol.Value = 1;
     }
 
     protected void RenderUpdate(object? sender, EventArgs? e)
     {
-     
+        AudioProcessor.UpdateVolume(Mixer.SQUARE_1, (float)sq1_vol.Value);
+        AudioProcessor.UpdateVolume(Mixer.SQUARE_2, (float)sq2_vol.Value);
+        AudioProcessor.UpdateVolume(Mixer.TRIANGLE, (float)tri_vol.Value);
+        AudioProcessor.UpdateVolume(Mixer.NOISE, (float)noi_vol.Value);
+        AudioProcessor.UpdateVolume(Mixer.DMC, (float)dmc_vol.Value);
         
     }
 
     private void InitAudioUpdate()
     {
-        //AudioProcessor.SetOscilatorEffect(new VolEffect(new byte[] { 7, 8, 9, 10, 11, 12, 13, 14, 15, 15, 15, 14, 14, 14, 13, 13, 13, 12, 12, 12, 11, 11, 11, 10, 10, 10, 9, 9, 9, 8, 8, 8, 7, 7, 7, 6, 6, 6, 5, 5, 5, 4, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 0 }), Mixer.SQUARE_1);
-        //AudioProcessor.SetOscilatorEffect(new VolEffect(new byte[] { 15, 15, 15, 11, 11, 11, 7, 7, 7, 5, 5, 5 }), Mixer.SQUARE_2);
-        //AudioProcessor.SetOscilatorEffect(new VolEffect(new byte[] { 15, 15, 15, 11, 7, 0 }), Mixer.NOISE);
-
         AudioActive = true;
         audioLoopWorker = new BackgroundWorker(); 
         audioLoopWorker.WorkerReportsProgress = true;
