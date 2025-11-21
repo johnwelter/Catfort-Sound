@@ -1,0 +1,19 @@
+//fill wavetable in, mirrored
+
+LDA #00
+STA $4040		;; start wavRam with 0  
+LDY #00 		;; start y at 0
+LDX #3F 		;; start x at 3F
+loop1: 
+LDA ($E2), Y 	;; load from the current wavetable pointer stored in $E2
+STA $4041, Y	;; store into the accompaning slot in wavRam
+INY
+CPY #20			;; if Y is 20
+BEQ finish	;; jump ahead
+STA $4040, X	;; 		else, store the last value into 407F - X
+DEX				;;		dec X
+BNE loop1		;; 		if x is not 0, do the next sample 
+finished:
+.
+.
+.
