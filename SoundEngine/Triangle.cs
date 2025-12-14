@@ -12,7 +12,15 @@ namespace CatfortSound.SoundEngine
         double ampStepDirection = 1;
 
         //a bit of a magic number, but 15 wasn't cutting it.
-        public override float GetVolume() => 45f;
+        public override float GetVolume()
+        {
+            float mult = 1f;
+            if(Effects.HasEffect(EffectStack.EffectSlots.kVol))
+            {
+                mult = Effects.GetEffectValue(EffectStack.EffectSlots.kVol) > 0 ? 1 : 0; 
+            }
+            return 45 * mult;
+        }
 
         int lutIndex = 0;
         private static readonly float[] triangleLut = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
@@ -29,7 +37,7 @@ namespace CatfortSound.SoundEngine
         public override void UpdateCurrentSample(int updateTicks)
         {
             lutIndex = (lutIndex + updateTicks) % 32;
-            CurrentSample = ((triangleLut[lutIndex] / 15f) - 0.5f) * 2f;
+            CurrentSample = ((triangleLut[lutIndex] / 15f) - 0.5f) * 3f;
         }
     }
 

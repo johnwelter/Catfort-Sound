@@ -6,24 +6,72 @@
         xmlns:local="clr-namespace:CatfortSound"
         mc:Ignorable="d"
         Title="Catfort Sound
-        " Height="239" Width="443">
+        " Height="493" Width="646">
     <Window.Resources>
-        <Thickness x:Key="tbMargin">0, 10, 0, 0</Thickness>
+        <Thickness x:Key="tbMargin">0, 0, 0, 0</Thickness>
     </Window.Resources>
-    <Grid>
-
-        <StackPanel Margin="10,10,10,10">
-            <StackPanel.Resources>
-                <Style TargetType="{x:Type Slider}">
-                    <Setter Property="Margin" Value="{StaticResource tbMargin}"/>
-                </Style>
-            </StackPanel.Resources>
-            <Slider x:Name="sq1_vol" HorizontalAlignment="Left" Width="350" Maximum="1" TickPlacement="BottomRight" TickFrequency="0.1"/>
-            <Slider x:Name="sq2_vol" HorizontalAlignment="Left" Width="350" Maximum="1" TickPlacement="BottomRight" TickFrequency="0.1"/>
-            <Slider x:Name="tri_vol" HorizontalAlignment="Left" Width="350" Maximum="1" TickPlacement="BottomRight" TickFrequency="0.1"/>
-            <Slider x:Name="noi_vol" HorizontalAlignment="Left" Width="350" Maximum="1" TickPlacement="BottomRight" TickFrequency="0.1"/>
-            <Slider x:Name="dmc_vol" HorizontalAlignment="Left" Width="350" Maximum="1" TickPlacement="BottomRight" TickFrequency="0.1"/>
+    <Grid >
+        <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Vertical">
+                
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel.Resources>
+                        <Style TargetType="{x:Type Slider}">
+                            <Setter Property="Margin" Value="{StaticResource tbMargin}"/>
+                        </Style>
+                    </StackPanel.Resources>
+                    <DockPanel>
+                        <StackPanel Orientation="Vertical">
+                            <Label Content="Square 1"/>
+                            <Slider x:Name="sq1_vol" HorizontalAlignment="Center" Width="30" Orientation="Vertical" Maximum="1" TickPlacement="BottomRight" TickFrequency="0.1" Height="160"/>
+                        </StackPanel>
+                    </DockPanel>
+                    <DockPanel>
+                        <StackPanel Orientation="Vertical">
+                            <Label Content="Square 2"/>
+                            <Slider x:Name="sq2_vol" HorizontalAlignment="Center" Width="30" Orientation="Vertical" Maximum="1" TickPlacement="BottomRight" TickFrequency="0.1" Height="160"/>
+                        </StackPanel>
+                    </DockPanel>
+                    <DockPanel>
+                        <StackPanel Orientation="Vertical">
+                            <Label Content="Triangle"/>
+                            <Slider x:Name="tri_vol" HorizontalAlignment="Center" Width="30" Orientation="Vertical" Maximum="1" TickPlacement="BottomRight" TickFrequency="0.1" Height="160"/>
+                        </StackPanel>
+                    </DockPanel>
+                    <DockPanel>
+                        <StackPanel Orientation="Vertical">
+                            <Label Content="Noise"/>
+                            <Slider x:Name="noi_vol" HorizontalAlignment="Center" Width="30" Orientation="Vertical" Maximum="1" TickPlacement="BottomRight" TickFrequency="0.1" Height="160"/>
+                        </StackPanel>
+                    </DockPanel>
+                    <DockPanel>
+                        <StackPanel>
+                            <Label Content="DMC"/>
+                            <Slider x:Name="dmc_vol" HorizontalAlignment="Center" Width="30" Orientation="Vertical" Maximum="1" TickPlacement="BottomRight" TickFrequency="0.1" Height="160"/>
+                        </StackPanel>
+                    </DockPanel>
+                </StackPanel>
+                <Button x:Name="button" Content="Button"/>
+            </StackPanel>
+            <DockPanel>
+                <TabControl x:Name="tabControl">
+                    <TabItem Header="Square1">
+                        <Grid Background="#FFE5E5E5">
+                            <TextBox x:Name="square1Text" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="383" Height="286"/>
+                        </Grid>
+                    </TabItem>
+                    <TabItem Header="Square2">
+                        <Grid Background="#FFE5E5E5">
+                            <TextBox x:Name="square2Text" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="383" Height="286"/>
+                        </Grid>
+                    </TabItem>
+                    <TabItem Header="Triangle">
+                        <Grid Background="#FFE5E5E5">
+                            <TextBox x:Name="triangleText" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="383" Height="286"/>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
+            </DockPanel>
         </StackPanel>
-
     </Grid>
 </Window>

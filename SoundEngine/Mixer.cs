@@ -82,6 +82,8 @@ namespace CatfortSound.SoundEngine
             }
 
             return mixBuffer;
+
+            //need to add bass boosting - sounds kinda thin.
         }
 
         internal void TriggerDMC(int sample)

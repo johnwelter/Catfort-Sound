@@ -115,7 +115,16 @@ namespace CatfortSound.SoundEngine
         
         };
 
-        public readonly byte[] TriTest = { Notes.rest, Ins.Loop 
+        public readonly byte[] TriTest = { Ins.VolEffect, 0x05, 
+                                            Len.d4, Notes.A3, Len.l4, Notes.A3, Len.l8, Notes.A3, Len.l4, Notes.E3, Notes.G3, Notes.B3,
+                                            Notes.F3, Notes.E3, Notes.B3,
+                                            Len.d4, Notes.A3, Len.l4, Notes.A3, Len.l8, Notes.A3, Len.l4, Notes.E3, Notes.G3, Notes.B3,
+
+                                            Len.d4, Notes.A3, Len.l4, Notes.A3, Len.l8, Notes.A3, Len.l4, Notes.C4, Notes.B3, Notes.F3,
+                                            Notes.G4, Notes.E4, Notes.C4,
+                                            Len.d4, Notes.B3, Len.l4, Notes.B3, Len.l8, Notes.B3, Len.l4, Notes.F3, Notes.A3, Notes.C4,
+                                            Len.d4, Notes.B3, Len.l4, Notes.B3, Len.l8, Notes.B3, Len.l4, Notes.F3, Notes.A3, Notes.C4,
+                                            Ins.Loop 
         };
 
 

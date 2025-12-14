@@ -81,7 +81,7 @@ namespace CatfortSound.SoundEngine
                 for(int i = 0; i < mixBuffer.Length; i++)
                 {
                     float masteredSample = mixBuffer[i] * m_masterVolume * APUConstants.AMPLITUDE_MAX;
-                    outputWave[i] = Convert.ToInt16(masteredSample);
+                    outputWave[i] = Convert.ToInt16(Math.Min(masteredSample, short.MaxValue));
                 }
                 if(accumulateOutput)
                 {
@@ -146,7 +146,7 @@ namespace CatfortSound.SoundEngine
     {
         public static readonly uint SAMPLE_RATE = 44100;
         public static readonly short BITS_PER_SAMPLE = 16;
-        public static readonly float BASE_VOLUME = 0.05f;
+        public static readonly float BASE_VOLUME = 0.35f;
         public static readonly float AMPLITUDE_MAX = BASE_VOLUME * short.MaxValue;
 
         public static readonly float CPU_Hz = 1789773f;
