@@ -83,7 +83,7 @@ namespace CatfortSound.SoundEngine
                     float masteredSample = mixBuffer[i] * m_masterVolume * APUConstants.AMPLITUDE_MAX;
                     outputWave[i] = Convert.ToInt16(Math.Min(masteredSample, short.MaxValue));
                 }
-                if(accumulateOutput)
+                if (accumulateOutput)
                 {
                     outputArray.AddRange(outputWave);
                 }
@@ -140,19 +140,31 @@ namespace CatfortSound.SoundEngine
                 mixer.ChannelVolumes[channel] = volume;
             }
         }
+
+        public void ResetChannels()
+        {
+            outputArray.Clear();
+            if(mixer is not null)
+            {
+                mixer.ResetChannels();
+            }
+        }
     }
 
     class APUConstants
     {
-        public static readonly uint SAMPLE_RATE = 44100;
+        //public static readonly uint SAMPLE_RATE = 44100;
+        public static readonly uint SAMPLE_RATE = 48000;
         public static readonly short BITS_PER_SAMPLE = 16;
         public static readonly float BASE_VOLUME = 0.35f;
         public static readonly float AMPLITUDE_MAX = BASE_VOLUME * short.MaxValue;
 
         public static readonly float CPU_Hz = 1789773f;
         //each CPU cycle is about 40.5 samples long
-        public static readonly float CPU_CLOCKS_PER_SAMPLE = 40.58442176870748f;
+        //public static readonly float CPU_CLOCKS_PER_SAMPLE = 40.58442176870748f;
+        public static readonly float CPU_CLOCKS_PER_SAMPLE = 37.2869375f;
         //APU runs every other CPU cycle, so we get half the clocks
-        public static readonly float APU_CLOCKS_PER_SAMPLE = 20.29221088435374f;
+        //public static readonly float APU_CLOCKS_PER_SAMPLE = 20.29221088435374f;
+        public static readonly float APU_CLOCKS_PER_SAMPLE = 18.64346875f;
     }
 }

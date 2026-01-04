@@ -6,14 +6,29 @@
         xmlns:local="clr-namespace:CatfortSound"
         mc:Ignorable="d"
         Title="Catfort Sound
-        " Height="493" Width="646">
+        " Height="832" Width="649">
     <Window.Resources>
         <Thickness x:Key="tbMargin">0, 0, 0, 0</Thickness>
+        <Thickness x:Key="buttonMargin">0, 10, 0, 0</Thickness>
     </Window.Resources>
     <Grid >
-        <StackPanel Orientation="Horizontal">
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="File">
+                <MenuItem Header="New" Click="Toolbar_New"/>
+                <MenuItem Header="Open..." Click="Toolbar_Open"/>
+                <MenuItem Header="Save" Click="Toolbar_Save"/>
+                <MenuItem Header="Save As..." Click="Toolbar_SaveAs"/>
+                <MenuItem Header="Export..." Click="Toolbar_Export"/>
+                <Separator/>
+                <!--MenuItem Header="Settings..." Click="Toolbar_Settings"/-->
+            </MenuItem>
+            <MenuItem Header="Help">
+                <MenuItem Header="About" Click="Toolbar_About"/>
+            </MenuItem>
+        </Menu>
+        <StackPanel Orientation="Horizontal" Margin="0,21,0,0">
             <StackPanel Orientation="Vertical">
-                
+
                 <StackPanel Orientation="Horizontal">
                     <StackPanel.Resources>
                         <Style TargetType="{x:Type Slider}">
@@ -51,27 +66,103 @@
                         </StackPanel>
                     </DockPanel>
                 </StackPanel>
-                <Button x:Name="button" Content="Button"/>
+                <StackPanel Orientation="Vertical" Width="200">
+                    <StackPanel.Resources>
+                        <Style TargetType="{x:Type Button}">
+                            <Setter Property="Margin" Value="{StaticResource buttonMargin}"/>
+                        </Style>
+                        <Style TargetType="{x:Type StackPanel}">
+                            <Setter Property="Margin" Value="{StaticResource buttonMargin}"/>
+                        </Style>
+                    </StackPanel.Resources>
+                    <Button x:Name="play_button" Content="play" Click="play_button_Click" IsEnabled="false">
+
+                    </Button>
+                    <Button x:Name="stop_button" Content="stop" Click="stop_button_Click" IsEnabled="False"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox x:Name="tempo" Text="3" PreviewTextInput="Tempo_Validate" Width="42" VerticalAlignment="Center"/>
+                        <Label x:Name="framesPerLabel" Content="Frames per: "/>
+                        <CheckBox x:Name="use8Toggle" VerticalAlignment="Center"/>
+                        <Label x:Name="tempoBaseLabel" Content="32nd"/>
+                    </StackPanel>
+                </StackPanel>
             </StackPanel>
             <DockPanel>
                 <TabControl x:Name="tabControl">
                     <TabItem Header="Square1">
-                        <Grid Background="#FFE5E5E5">
-                            <TextBox x:Name="square1Text" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="383" Height="286"/>
-                        </Grid>
+                        <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
+                            <ScrollViewer Height="500">
+                                <StackPanel>
+                                    <DataGrid x:Name="p1Grid" CanUserSortColumns="False"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                            <ScrollViewer Height="100">
+                                <StackPanel>
+                                    <DataGrid x:Name="p1Subloops" CanUserSortColumns="False"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </StackPanel>
                     </TabItem>
                     <TabItem Header="Square2">
-                        <Grid Background="#FFE5E5E5">
-                            <TextBox x:Name="square2Text" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="383" Height="286"/>
-                        </Grid>
+                        <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
+                            <ScrollViewer Height="500">
+                                <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
+                                    <DataGrid x:Name="p2Grid" CanUserSortColumns="False"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                            <ScrollViewer Height="100">
+                                <StackPanel>
+                                    <DataGrid x:Name="p2Subloops" CanUserSortColumns="False"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </StackPanel>
                     </TabItem>
                     <TabItem Header="Triangle">
-                        <Grid Background="#FFE5E5E5">
-                            <TextBox x:Name="triangleText" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="383" Height="286"/>
-                        </Grid>
+                        <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
+                            <ScrollViewer Height="500">
+                                <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
+                                    <DataGrid x:Name="tGrid"  CanUserSortColumns="False"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                            <ScrollViewer Height="100">
+                                <StackPanel>
+                                    <DataGrid x:Name="tSubloops" CanUserSortColumns="False"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </StackPanel>
+                    </TabItem>
+                    <TabItem Header="Noise">
+                        <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
+                            <ScrollViewer Height="500">
+                                <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
+                                    <DataGrid x:Name="nGrid"  CanUserSortColumns="False"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                            <ScrollViewer Height="500">
+                                <StackPanel>
+                                    <DataGrid x:Name="nSubloops" CanUserSortColumns="False"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </StackPanel>
+                    </TabItem>
+                    <TabItem Header="DMC">
+                        <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
+                            <ScrollViewer Height="500">
+                                <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
+                                    <DataGrid x:Name="dmcGrid"  CanUserSortColumns="False"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                            <ScrollViewer Height="100">
+                                <StackPanel>
+                                    <DataGrid x:Name="dmcSubloops" CanUserSortColumns="False"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </StackPanel>
                     </TabItem>
                 </TabControl>
             </DockPanel>
         </StackPanel>
+
+
     </Grid>
 </Window>

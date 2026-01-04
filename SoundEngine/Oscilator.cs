@@ -9,7 +9,7 @@ namespace CatfortSound.SoundEngine
 {
     class Oscilator : Channel
     {
-        protected int m_pitch = Notes.rest;
+        protected int m_pitch;
 
         public EffectStack Effects = new EffectStack();
 
@@ -17,6 +17,11 @@ namespace CatfortSound.SoundEngine
         public virtual int GetPitch() => Effects.HasEffect(EffectStack.EffectSlots.kArp) ? m_pitch + Effects.GetEffectValue(EffectStack.EffectSlots.kArp) : m_pitch;
         public virtual int GetLengthTimer() => Effects.HasEffect(EffectStack.EffectSlots.kMod) ? (int)NoteTables.NoteTable[GetPitch()] + (sbyte)Effects.GetEffectValue(EffectStack.EffectSlots.kMod): (int)NoteTables.NoteTable[GetPitch()];
         //public virtual float GetVolume() => 15f;
+
+        public Oscilator() : base()
+        {
+            m_pitch = NoteClass.rest;
+        }
 
         public virtual void SetPitch(int pitch)
         {
@@ -32,6 +37,10 @@ namespace CatfortSound.SoundEngine
 
         public override float GenerateSample()
         {
+            if(m_pitch == -1 || m_pitch == NoteClass.rest)
+            {
+                return 0;
+            }
             float sample = GetWaveSample() * GetVolume();
             return sample;
         }
@@ -44,6 +53,13 @@ namespace CatfortSound.SoundEngine
             }
             Clock(APUConstants.APU_CLOCKS_PER_SAMPLE, GetLengthTimer());
             return CurrentSample;
+        }
+
+        public override void Reset()
+        {
+            base.Reset();
+            m_pitch = NoteClass.rest;
+            Effects.ClearAllEffect();
         }
 
     }

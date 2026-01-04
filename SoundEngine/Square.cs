@@ -42,15 +42,21 @@ namespace CatfortSound.SoundEngine
             this.cycle = cycle;
         }
 
-        public override void UpdateCurrentSample(int updateTicks)
+        public override void UpdateCurrentSample(int updateTicks, float ramp)
         {
             lutIndex = betterMod(lutIndex - updateTicks, 8);
-            CurrentSample = dutyLut[GetDutyCycle(), lutIndex] > 0 ? 1f : -1f;
+            CurrentSample = dutyLut[GetDutyCycle(), lutIndex];
         }
 
         int betterMod(int val, int mod)
         {
             return (val % mod + mod) % mod;
+        }
+
+        public override void Reset()
+        {
+            base.Reset();
+            lutIndex = 0;
         }
 
     }

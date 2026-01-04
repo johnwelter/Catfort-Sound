@@ -13,6 +13,20 @@ namespace CatfortSound.SoundEngine
         bool ModeFlag = false;
         public override int GetLengthTimer() => Effects.HasEffect(EffectStack.EffectSlots.kMod) ? timerLut[(GetPitch() + (sbyte)Effects.GetEffectValue(EffectStack.EffectSlots.kMod))%16] : timerLut[GetPitch()%16];
 
+        public Noise() : base()
+        {
+            m_pitch = -1;
+        }
+
+        public override void SetPitch(int pitch)
+        {
+            base.SetPitch(pitch);
+            if(pitch >= 17)
+            {
+                m_pitch = -1;
+            }
+        }
+
         //originals are in CPU cycles - the noise oscilator runs on APU cycles, so we'll need to /2 
         private static readonly int[] timerLut =
         {
@@ -20,7 +34,7 @@ namespace CatfortSound.SoundEngine
               2, 4, 8, 16, 32, 48, 64, 80, 101, 126, 190, 254, 381, 508, 1017, 2034
         };
 
-        public override void UpdateCurrentSample(int updateTicks)
+        public override void UpdateCurrentSample(int updateTicks, float ramp)
         {
             for (int i = 0; i < updateTicks; i++)
             {
@@ -31,11 +45,20 @@ namespace CatfortSound.SoundEngine
                 ShiftRegister |= feedback;
             }
 
-            CurrentSample = ((((float)ShiftRegister) / short.MaxValue) - 0.5f) * 8f;
+
+            CurrentSample =  (ShiftRegister & 1) == 0 ? 0 : 1f;
         }
         public void SetModeFlag(bool newModeFlag)
         {
             ModeFlag = newModeFlag;
+        }
+
+        public override void Reset()
+        {
+            base.Reset();
+            m_pitch = -1;
+            ShiftRegister = 1;
+            ModeFlag = false;
         }
     }
 }

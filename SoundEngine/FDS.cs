@@ -63,7 +63,7 @@ namespace CatfortSound.SoundEngine
             return CurrentSample * 10f;
         }
 
-        public override void UpdateCurrentSample(int updateTicks)
+        public override void UpdateCurrentSample(int updateTicks, float ramp)
         {
             byte[] dmc = SampleList[(int)LoadedSample];
 

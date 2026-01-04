@@ -6,10 +6,16 @@ using System.Threading.Tasks;
 
 namespace CatfortSound.SoundEngine
 {
+
     class Triangle : Oscilator
     {
-        double currentSample = 0;
-        double ampStepDirection = 1;
+        //We'll make a pseudo filter for the triangle to keep popping to a minumum when cutting off the channel - 
+        //Once I understand fourier then I might be able to make some real filters for the whole system
+
+        //filter accel rate per sample gen
+        float PseudoFilterStep = 0.01f;
+        float PseudoFilterMult = 0.0f;
+
 
         //a bit of a magic number, but 15 wasn't cutting it.
         public override float GetVolume()
@@ -19,25 +25,41 @@ namespace CatfortSound.SoundEngine
             {
                 mult = Effects.GetEffectValue(EffectStack.EffectSlots.kVol) > 0 ? 1 : 0; 
             }
-            return 45 * mult;
+            return mult;
         }
 
         int lutIndex = 0;
-        private static readonly float[] triangleLut = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
+        private static readonly float[] triangleLut = { 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
         protected override float GetWaveSample()
         {
-            if (GetLengthTimer() == 0)
+            if (m_pitch == NoteClass.rest || GetVolume() == 0)
             {
-                return CurrentSample;
+                PseudoFilterMult = Math.Max(PseudoFilterMult - PseudoFilterStep, 0);
+                return CurrentSample * PseudoFilterMult;
             }
             Clock(APUConstants.CPU_CLOCKS_PER_SAMPLE, GetLengthTimer());
-            return CurrentSample;
+
+            PseudoFilterMult = Math.Min(PseudoFilterMult + PseudoFilterStep, 1);
+            return CurrentSample * PseudoFilterMult;
         }
 
-        public override void UpdateCurrentSample(int updateTicks)
+
+        public override float GenerateSample()
+        {
+            float sample = GetWaveSample();
+            return sample;
+        }
+
+        public override void UpdateCurrentSample(int updateTicks, float ramp)
         {
             lutIndex = (lutIndex + updateTicks) % 32;
-            CurrentSample = ((triangleLut[lutIndex] / 15f) - 0.5f) * 3f;
+            CurrentSample = triangleLut[lutIndex];
+        }
+
+        public override void Reset()
+        {
+            base.Reset();
+            lutIndex = 0;
         }
     }
 

@@ -30,18 +30,28 @@ namespace CatfortSound.SoundEngine
             fTimer += clocks;
             int truncTimer = (int)fTimer;
             int limitTime = lengthTimer + 1;
+            int ticks = 0;
+            float ramp = fTimer / limitTime;
 
             if (truncTimer > limitTime)
             {
-                int ticks = truncTimer / limitTime;
+                ticks = truncTimer / limitTime;
                 fTimer = fTimer - (limitTime * ticks);
+                ramp = fTimer / limitTime;
 
-                UpdateCurrentSample(ticks);
             }
+            UpdateCurrentSample(ticks, ramp);
         }
 
-        public virtual void UpdateCurrentSample(int updateTicks) { }
+        public virtual void UpdateCurrentSample(int updateTicks, float ramp) { }
 
         public virtual void FrameTick() { }
+
+        public virtual void Reset()
+        {
+            m_channelVolume = 15;
+            fTimer = 0;
+            CurrentSample = 0;
+        }
     }
 }
