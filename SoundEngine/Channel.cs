@@ -11,8 +11,11 @@ namespace CatfortSound.SoundEngine
         protected float m_channelVolume = 15;
 
         protected float fTimer = 0;
+        protected int timer = 0;
+        protected float clockOverflow= 0;
 
         protected float CurrentSample;
+        protected float CurrentRawSample;
 
 
         public virtual float GenerateSample() 
@@ -27,23 +30,48 @@ namespace CatfortSound.SoundEngine
 
         public virtual void Clock(float clocks, int lengthTimer)
         {
-            fTimer += clocks;
-            int truncTimer = (int)fTimer;
-            int limitTime = lengthTimer + 1;
-            int ticks = 0;
-            float ramp = fTimer / limitTime;
 
-            if (truncTimer > limitTime)
+            //find out how many samples we'll need to average
+            clockOverflow += clocks - (int)clocks;
+            int extraClock = 0;
+            if(clockOverflow > 1)
             {
-                ticks = truncTimer / limitTime;
-                fTimer = fTimer - (limitTime * ticks);
-                ramp = fTimer / limitTime;
-
+                extraClock = 1;
+                clockOverflow -= 1;
             }
-            UpdateCurrentSample(ticks, ramp);
+            int samples = (int)clocks + extraClock;
+            float totalSample = 0;
+            int limitTime = lengthTimer + 1;
+
+            for(int i = 0; i < samples; i++)
+            {
+                timer++;
+                if(timer >= limitTime)
+                {
+                    UpdateCurrentSample(1);
+                    timer -= limitTime;
+                }
+                totalSample += CurrentRawSample;
+            }
+
+            CurrentSample = totalSample / samples;
+            
+            //fTimer += clocks;
+            //int truncTimer = (int)fTimer;
+            //int ticks = 0;
+            //float ramp = fTimer / limitTime;
+
+            //if (truncTimer > limitTime)
+            //{
+            //    ticks = truncTimer / limitTime;
+            //    fTimer = fTimer - (limitTime * ticks);
+            //    ramp = fTimer / limitTime;
+
+            //}
+            //UpdateCurrentSample(ticks);
         }
 
-        public virtual void UpdateCurrentSample(int updateTicks, float ramp) { }
+        public virtual void UpdateCurrentSample(int updateTicks) { }
 
         public virtual void FrameTick() { }
 
@@ -51,6 +79,7 @@ namespace CatfortSound.SoundEngine
         {
             m_channelVolume = 15;
             fTimer = 0;
+            timer = 0;
             CurrentSample = 0;
         }
     }

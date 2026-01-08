@@ -50,10 +50,10 @@ namespace CatfortSound.SoundEngine
             return sample;
         }
 
-        public override void UpdateCurrentSample(int updateTicks, float ramp)
+        public override void UpdateCurrentSample(int updateTicks)
         {
             lutIndex = (lutIndex + updateTicks) % 32;
-            CurrentSample = triangleLut[lutIndex];
+            CurrentRawSample = triangleLut[lutIndex];
         }
 
         public override void Reset()

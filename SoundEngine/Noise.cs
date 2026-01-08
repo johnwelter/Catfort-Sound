@@ -34,7 +34,7 @@ namespace CatfortSound.SoundEngine
               2, 4, 8, 16, 32, 48, 64, 80, 101, 126, 190, 254, 381, 508, 1017, 2034
         };
 
-        public override void UpdateCurrentSample(int updateTicks, float ramp)
+        public override void UpdateCurrentSample(int updateTicks)
         {
             for (int i = 0; i < updateTicks; i++)
             {
@@ -46,7 +46,7 @@ namespace CatfortSound.SoundEngine
             }
 
 
-            CurrentSample =  (ShiftRegister & 1) == 0 ? 0 : 1f;
+            CurrentRawSample =  (ShiftRegister & 1) == 0 ? 0 : 1f;
         }
         public void SetModeFlag(bool newModeFlag)
         {

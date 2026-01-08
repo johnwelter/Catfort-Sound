@@ -411,14 +411,11 @@ namespace CatfortSound.SoundEngine
             LoadedSample = sample;
             m_samplePitch = pitch;
             CurrentSample = 0;
+            CurrentRawSample = 63;
         }
 
         public override float GenerateSample()
         {
-
-            //for a given sample - get the current bit from the current byte
-            //inc sample if 1, dec if 0
-            //clamp between 127 and -127
             if(byteIndex == -1 || LoadedSample == -1)
             {
                 PseudoFilterMult = Math.Max(PseudoFilterMult - PseudoFilterStep, 0);
@@ -430,7 +427,7 @@ namespace CatfortSound.SoundEngine
             return CurrentSample * PseudoFilterMult;
         }
 
-        public override void UpdateCurrentSample(int updateTicks, float ramp)
+        public override void UpdateCurrentSample(int updateTicks)
         {
             if(updateTicks == 0)
             {
@@ -453,7 +450,7 @@ namespace CatfortSound.SoundEngine
             }
 
             float NewSample = CurrentSample + step;
-            CurrentSample = (NewSample < -80  || NewSample > 80) ? CurrentSample : NewSample; 
+            CurrentRawSample = (NewSample < 0  || NewSample > 127) ? CurrentSample : NewSample; 
         }
 
         public override void Reset()

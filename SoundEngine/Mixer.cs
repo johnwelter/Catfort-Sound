@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Channels;
@@ -18,12 +19,6 @@ namespace CatfortSound.SoundEngine
 
         public Channel[] Channels = [new Square(DutyCycle.k25), new Square(DutyCycle.k50), new Triangle(), new Noise(), new DMC(), new FDS()];
         public float[] ChannelVolumes = [1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f];
-
-        private float prevSq1;
-        private float prevSq2;
-        private float prevTri;
-        private float prevNoi;
-        private float prevDMC;
 
         public void SetChannelVolume(float volume, int channel)
         {
@@ -73,6 +68,7 @@ namespace CatfortSound.SoundEngine
 
             for (int i = 0; i < samplesThisFrame; i++)
             {
+                //we'll want to recenter these channel by channel
                 float square1 = Channels[SQUARE_1].GenerateSample() * ChannelVolumes[SQUARE_1];
                 float square2 = Channels[SQUARE_2].GenerateSample() * ChannelVolumes[SQUARE_2];
                 float triangle = Channels[TRIANGLE].GenerateSample() * ChannelVolumes[TRIANGLE];
@@ -80,26 +76,18 @@ namespace CatfortSound.SoundEngine
                 float dmc = Channels[DMC].GenerateSample() * ChannelVolumes[DMC];
                 //float fds = Channels[FDS].GenerateSample() * ChannelVolumes[FDS];
 
-                float avgP1 = (prevSq1 + square1) / 2f;
-                float avgp2 = (prevSq2 + square2) / 2f;
-                float avgTri = (prevTri + triangle) / 2f;
-                float avgNoi = (prevNoi + noise) / 2f;
-                float avgDMC = (prevDMC + dmc) / 2f;
+                float pulseOut = MakePusleOut(square1, square2);
+                float tndOut = MakeTNDOut(triangle, noise, dmc);
 
-                float pulseOut = MakePusleOut(avgP1, avgp2);
-                float tndOut = MakeTNDOut(avgTri, avgNoi, avgDMC);
+                //value sould be some number between 0 and 1 - so we can recenter it
 
                 mixBuffer[i] = pulseOut + tndOut;
-
-                prevSq1 = square1;
-                prevSq2 = square2;
-                prevTri = triangle;
-                prevNoi = noise;
-                prevDMC = dmc;
             }
 
             return mixBuffer;
         }
+
+
 
         internal void TriggerDMC(int sample)
         {
@@ -121,11 +109,6 @@ namespace CatfortSound.SoundEngine
             {
                 c.Reset();
             }
-            prevSq1 = 0;
-            prevSq2 = 0;
-            prevTri = 0;
-            prevNoi = 0;
-            prevDMC = 0;
         }
 
         public float MakePusleOut(float p1, float p2)
