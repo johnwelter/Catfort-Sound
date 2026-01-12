@@ -416,15 +416,11 @@ namespace CatfortSound.SoundEngine
 
         public override float GenerateSample()
         {
-            if(byteIndex == -1 || LoadedSample == -1)
+            if(byteIndex != -1 && LoadedSample != -1)
             {
-                PseudoFilterMult = Math.Max(PseudoFilterMult - PseudoFilterStep, 0);
-                return CurrentSample * PseudoFilterMult;
+                Clock(APUConstants.CPU_CLOCKS_PER_SAMPLE, timerLut[m_samplePitch]);
             }
-
-            PseudoFilterMult = Math.Min(PseudoFilterMult + PseudoFilterStep, 1);
-            Clock(APUConstants.CPU_CLOCKS_PER_SAMPLE, timerLut[m_samplePitch]);
-            return CurrentSample * PseudoFilterMult;
+            return CurrentSample;
         }
 
         public override void UpdateCurrentSample(int updateTicks)

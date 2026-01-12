@@ -1,7 +1,10 @@
-﻿using System;
+﻿using MathNet.Numerics.Distributions;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security;
 using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -19,6 +22,17 @@ namespace CatfortSound.SoundEngine
 
         public Channel[] Channels = [new Square(DutyCycle.k25), new Square(DutyCycle.k50), new Triangle(), new Noise(), new DMC(), new FDS()];
         public float[] ChannelVolumes = [1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f];
+
+
+        float beta => 0.99f;
+        float gain => (1.0f + beta)/2.0f;
+
+        float alpha => 0.3f;
+
+        float prev_outputLo = 0;
+        float prev_output = 0;
+        float prev_input = 0;
+
 
         public void SetChannelVolume(float volume, int channel)
         {
@@ -81,7 +95,18 @@ namespace CatfortSound.SoundEngine
 
                 //value sould be some number between 0 and 1 - so we can recenter it
 
-                mixBuffer[i] = pulseOut + tndOut;
+                float mix = pulseOut + tndOut;
+
+                float output = gain * (mix - prev_input) + beta * prev_output;
+
+                prev_input = mix;
+                prev_output = output;
+
+                float outLo = alpha * output + (1 - alpha) * prev_outputLo;
+                prev_outputLo = outLo;
+
+                mixBuffer[i] = output;
+                //mixBuffer[i] = mix;
             }
 
             return mixBuffer;
@@ -96,7 +121,8 @@ namespace CatfortSound.SoundEngine
 
             if((byte)sample == 0xFF)
             {
-                dmcIndex = -1;
+                //dmcIndex = -1;
+                return;
             }
 
             DMC? dmc = Channels[DMC] as DMC;
@@ -109,6 +135,8 @@ namespace CatfortSound.SoundEngine
             {
                 c.Reset();
             }
+            prev_input = 0;
+            prev_output = 0;
         }
 
         public float MakePusleOut(float p1, float p2)
