@@ -15,8 +15,4 @@
     <PackageReference Include="OwnAudioSharp" Version="1.0.68" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Examples\" />
-  </ItemGroup>
-
 </Project>
