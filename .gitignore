@@ -402,3 +402,4 @@ FodyWeavers.xsd
 
 # Files I don't want getting roped in
 RawTables/
+Examples/
