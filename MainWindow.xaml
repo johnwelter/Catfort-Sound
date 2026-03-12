@@ -6,13 +6,14 @@
         xmlns:local="clr-namespace:CatfortSound"
         mc:Ignorable="d"
         Title="Catfort Sound
-        " Height="832" Width="649">
+        " Height="832" Width="1139"
+        >
     <Window.Resources>
         <Thickness x:Key="tbMargin">0, 0, 0, 0</Thickness>
         <Thickness x:Key="buttonMargin">0, 10, 0, 0</Thickness>
     </Window.Resources>
     <Grid >
-        <Menu DockPanel.Dock="Top">
+        <Menu x:Name="UI_Menu"  DockPanel.Dock="Top">
             <MenuItem Header="File">
                 <MenuItem Header="New" Click="Toolbar_New"/>
                 <MenuItem Header="Open..." Click="Toolbar_Open"/>
@@ -26,10 +27,10 @@
                 <MenuItem Header="About" Click="Toolbar_About"/>
             </MenuItem>
         </Menu>
-        <StackPanel Orientation="Horizontal" Margin="0,21,0,0">
+        <StackPanel x:Name="UI_MainWindow"  Orientation="Horizontal" Margin="0,21,0,0">
             <StackPanel Orientation="Vertical">
 
-                <StackPanel Orientation="Horizontal">
+                <StackPanel x:Name="UI_VolumeControls" Orientation="Horizontal">
                     <StackPanel.Resources>
                         <Style TargetType="{x:Type Slider}">
                             <Setter Property="Margin" Value="{StaticResource tbMargin}"/>
@@ -66,7 +67,7 @@
                         </StackPanel>
                     </DockPanel>
                 </StackPanel>
-                <StackPanel Orientation="Vertical" Width="200">
+                <StackPanel x:Name="UI_PlaybackControls" Orientation="Vertical" Width="200">
                     <StackPanel.Resources>
                         <Style TargetType="{x:Type Button}">
                             <Setter Property="Margin" Value="{StaticResource buttonMargin}"/>
@@ -87,13 +88,13 @@
                     </StackPanel>
                 </StackPanel>
             </StackPanel>
-            <DockPanel>
+            <DockPanel x:Name="UI_TrackerDock">
                 <TabControl x:Name="tabControl">
                     <TabItem Header="Square1">
                         <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
                             <ScrollViewer Height="500">
                                 <StackPanel>
-                                    <DataGrid x:Name="p1Grid" CanUserSortColumns="False"/>
+                                    <DataGrid x:Name="p1Grid" CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}"/>
                                 </StackPanel>
                             </ScrollViewer>
                             <ScrollViewer Height="100">
@@ -107,7 +108,7 @@
                         <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
                             <ScrollViewer Height="500">
                                 <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
-                                    <DataGrid x:Name="p2Grid" CanUserSortColumns="False"/>
+                                    <DataGrid x:Name="p2Grid" CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}"/>
                                 </StackPanel>
                             </ScrollViewer>
                             <ScrollViewer Height="100">
@@ -121,7 +122,7 @@
                         <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
                             <ScrollViewer Height="500">
                                 <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
-                                    <DataGrid x:Name="tGrid"  CanUserSortColumns="False"/>
+                                    <DataGrid x:Name="tGrid"  CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}"/>
                                 </StackPanel>
                             </ScrollViewer>
                             <ScrollViewer Height="100">
@@ -135,7 +136,7 @@
                         <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
                             <ScrollViewer Height="500">
                                 <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
-                                    <DataGrid x:Name="nGrid"  CanUserSortColumns="False"/>
+                                    <DataGrid x:Name="nGrid"  CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}"/>
                                 </StackPanel>
                             </ScrollViewer>
                             <ScrollViewer Height="500">
@@ -149,7 +150,7 @@
                         <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
                             <ScrollViewer Height="500">
                                 <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
-                                    <DataGrid x:Name="dmcGrid"  CanUserSortColumns="False"/>
+                                    <DataGrid x:Name="dmcGrid"  CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}"/>
                                 </StackPanel>
                             </ScrollViewer>
                             <ScrollViewer Height="100">
@@ -161,6 +162,10 @@
                     </TabItem>
                 </TabControl>
             </DockPanel>
+            <StackPanel>
+                <DataGrid x:Name="TestGrid" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}">
+                </DataGrid>
+            </StackPanel>
         </StackPanel>
 
 

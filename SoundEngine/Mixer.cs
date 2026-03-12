@@ -13,13 +13,6 @@ namespace CatfortSound.SoundEngine
 {
     class Mixer
     {
-        public const int SQUARE_1 = 0;
-        public const int SQUARE_2 = 1;
-        public const int TRIANGLE = 2;
-        public const int NOISE = 3;
-        public const int DMC = 4;
-        public const int FDS = 5;
-
         public Channel[] Channels = [new Square(DutyCycle.k25), new Square(DutyCycle.k50), new Triangle(), new Noise(), new DMC(), new FDS()];
         public float[] ChannelVolumes = [1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f];
 
@@ -83,11 +76,11 @@ namespace CatfortSound.SoundEngine
             for (int i = 0; i < samplesThisFrame; i++)
             {
                 //we'll want to recenter these channel by channel
-                float square1 = Channels[SQUARE_1].GenerateSample() * ChannelVolumes[SQUARE_1];
-                float square2 = Channels[SQUARE_2].GenerateSample() * ChannelVolumes[SQUARE_2];
-                float triangle = Channels[TRIANGLE].GenerateSample() * ChannelVolumes[TRIANGLE];
-                float noise = Channels[NOISE].GenerateSample() * ChannelVolumes[NOISE];
-                float dmc = Channels[DMC].GenerateSample() * ChannelVolumes[DMC];
+                float square1 = Channels[(int)ChannelIndexes.SQUARE_1].GenerateSample() * ChannelVolumes[(int)ChannelIndexes.SQUARE_1];
+                float square2 = Channels[(int)ChannelIndexes.SQUARE_2].GenerateSample() * ChannelVolumes[(int)ChannelIndexes.SQUARE_2];
+                float triangle = Channels[(int)ChannelIndexes.TRIANGLE].GenerateSample() * ChannelVolumes[(int)ChannelIndexes.TRIANGLE];
+                float noise = Channels[(int)ChannelIndexes.NOISE].GenerateSample() * ChannelVolumes[(int)ChannelIndexes.NOISE];
+                float dmc = Channels[(int)ChannelIndexes.DMC].GenerateSample() * ChannelVolumes[(int)ChannelIndexes.DMC];
                 //float fds = Channels[FDS].GenerateSample() * ChannelVolumes[FDS];
 
                 float pulseOut = MakePusleOut(square1, square2);
@@ -125,7 +118,7 @@ namespace CatfortSound.SoundEngine
                 return;
             }
 
-            DMC? dmc = Channels[DMC] as DMC;
+            DMC? dmc = Channels[(int)ChannelIndexes.DMC] as DMC;
             dmc?.SetSample(dmcIndex, pitch);
         }
 

@@ -10,6 +10,17 @@ using System.Threading.Tasks;
 
 namespace CatfortSound.SoundEngine
 {
+
+    public enum ChannelIndexes
+    {
+        SQUARE_1 = 0,
+        SQUARE_2 = 1,
+        TRIANGLE = 2,
+        NOISE = 3,
+        DMC = 4,
+        FDS = 5,
+    }
+
     public enum Lengths
     {
         _ = 0x00,   //continue with no change
@@ -28,112 +39,23 @@ namespace CatfortSound.SoundEngine
         t8 = 0x8C,
         t4 = 0x8D,
     }
+
     public enum Notes
     {
-        rest = 0x5e,
-        A1 = 0x00,
-        As_Bb1 = 0x01,
-        B1 = 0x02,
+        rest = -1,
+        A = 0x00,
+        As_Bb = 0x01,
+        B = 0x02,
 
-        C2 = 0x03,
-        CsDb2 = 0x04,
-        D2 = 0x05,
-        DsEb2 = 0x06,
-        E2 = 0x07,
-        F2 = 0x08,
-        FsGb2 = 0x09,
-        G2 = 0x0A,
-        GsAb2 = 0x0B,
-        A2 = 0x0C,
-        AsBb2 = 0x0D,
-        B2 = 0x0E,
-
-        C3 = 0x0F,
-        CsDb3 = 0x10,
-        D3 = 0x11,
-        DsEb3 = 0x12,
-        E3 = 0x13,
-        F3 = 0x14,
-        FsGb3 = 0x15,
-        G3 = 0x16,
-        GsAb3 = 0x17,
-        A3 = 0x18,
-        AsBb3 = 0x19,
-        B3 = 0x1a,
-
-        C4 = 0x1b,
-        CsDb4 = 0x1c,
-        D4 = 0x1d,
-        DsEb4 = 0x1e,
-        E4 = 0x1f,
-        F4 = 0x20,
-        FsGb4 = 0x21,
-        G4 = 0x22,
-        GsAb4 = 0x23,
-        A4 = 0x24,
-        AsBb4 = 0x25,
-        B4 = 0x26,
-
-        C5 = 0x27,
-        CsDb5 = 0x28,
-        D5 = 0x29,
-        DsEb5 = 0x2a,
-        E5 = 0x2b,
-        F5 = 0x2c,
-        FsGb5 = 0x2d,
-        G5 = 0x2e,
-        GsAb5 = 0x2f,
-        A5 = 0x30,
-        AsBb5 = 0x31,
-        B5 = 0x32,
-
-        C6 = 0x33,
-        CsDb6 = 0x34,
-        D6 = 0x35,
-        DsEb6 = 0x36,
-        E6 = 0x37,
-        F6 = 0x38,
-        FsGb6 = 0x39,
-        G6 = 0x3a,
-        GsAb6 = 0x3b,
-        A6 = 0x3c,
-        AsBb6 = 0x3d,
-        B6 = 0x3e,
-
-        C7 = 0x3f,
-        CsDb7 = 0x40,
-        D7 = 0x41,
-        DsEb7 = 0x42,
-        E7 = 0x43,
-        F7 = 0x44,
-        FsGb7 = 0x45,
-        G7 = 0x46,
-        GsAb7 = 0x47,
-        A7 = 0x48,
-        AsBb7 = 0x49,
-        B7 = 0x4a,
-
-        C8 = 0x4b,
-        CsDb8 = 0x4c,
-        D8 = 0x4d,
-        DsEb8 = 0x4e,
-        E8 = 0x4f,
-        F8 = 0x50,
-        FsGb8 = 0x51,
-        G8 = 0x52,
-        GsAb8 = 0x53,
-        A8 = 0x54,
-        AsBb8 = 0x55,
-        B8 = 0x56,
-
-        C9 = 0x57,
-        CsDb9 = 0x58,
-        D9 = 0x59,
-        DsEb9 = 0x5a,
-        E9 = 0x5b,
-        F9 = 0x5c,
-        FsGb9 = 0x5d,
-
+        C = 0x03,
+        CsDb = 0x04,
+        D = 0x05,
+        DsEb = 0x06,
+        E = 0x07,
+        F = 0x08,
+        FsGb = 0x09,
+        G = 0x0A,
+        GsAb = 0x0B,
     }
 
     public static class NoteClass

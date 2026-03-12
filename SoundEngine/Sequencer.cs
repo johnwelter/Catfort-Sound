@@ -1,17 +1,22 @@
-﻿using FFmpeg.AutoGen;
+﻿using CatfortSound.SoundEngine;
+using CatfortSound.ViewModels;
+using FFmpeg.AutoGen;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Policy;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace CatfortSound.SoundEngine
@@ -42,7 +47,6 @@ namespace CatfortSound.SoundEngine
             0.25f, 0.5f, 1, 2, 4, 8, (0.25f + 0.5f), (0.5f + 1), (1 + 2), (2 + 4), (4 + 8), (1f/3f), (2f/3f), (4f/3f)
         };
     }
-
     public enum Instructions
     {
         End = 0xA0,
@@ -56,53 +60,102 @@ namespace CatfortSound.SoundEngine
         ModEffect = 0xA9,
         ArpEffect = 0xAA,
     }
-
-    static class Ins
+    public class SongChart
     {
-        //notes = 00 - 7F
-        //tick lenghts = 80 - 9F (maybe we should adjust to extend this? we're kinda limited)
-        //instructions = A0 - AF (maybe even B0 - FF, but we only really have up to AA ... AB when we implement duty effects in the engine
+        public object[] Channels =
+        [
+            new ObservableCollection<PulseEntry>(),
+            new ObservableCollection<PulseEntry>(),
+            new ObservableCollection<OscEntry>(),
+            new ObservableCollection<NoiseEntry>(),
+            new ObservableCollection<DMCEntry>(),
+        ];
 
-        public const byte End = 0xA0;
-        public const byte Loop = 0xA1;
-        public const byte VolEffect = 0xA2; //in engine, effects are technically always on - we just have single byte "none" options!
-        public const byte DutyEffect = 0xA3; // for full channel duty shifts, not effects *in engine* - will fix later, but will program it as effects in here
-        public const byte SetLoop1_Counter = 0xA4;
-        public const byte Loop1 = 0xA5;
-        public const byte SetNoteOffset = 0xA7;
-        public const byte Transpose = 0xA8;
-        public const byte ModEffect = 0xA9;
-        public const byte ArpEffect = 0xAA;
-    }
+        public ObservableCollection<Subloop>[] Subloops =
+        [
+            new ObservableCollection<Subloop>(),
+            new ObservableCollection<Subloop>(),
+            new ObservableCollection<Subloop>(),
+            new ObservableCollection<Subloop>(),
+            new ObservableCollection<Subloop>(),
+        ];
 
-
-    public class Sequence
-    {
-
-        public List<PulseEntry> pulse1Sequence = new();
-        public List<PulseEntry> pulse2Sequence = new();
-        public List<OscEntry> triangleSequence = new();
-        public List<NoiseEntry> noiseSequence = new();
-        public List<DMCEntry> dmcSequence = new();
-
-        public List<Subloop> pulse1Subloops = new();
-        public List<Subloop> pulse2Subloops = new();
-        public List<Subloop> triangleSubloops = new();
-        public List<Subloop> noiseSubloops = new();
-        public List<Subloop> dmcSubloops = new();
         public void Clear()
         {
-            pulse1Sequence.Clear();
-            pulse1Subloops.Clear();
-            pulse2Sequence.Clear();
-            pulse2Subloops.Clear();
-            triangleSequence.Clear();
-            triangleSubloops.Clear();
-            noiseSequence.Clear();
-            noiseSubloops.Clear();
-            dmcSequence.Clear();
-            dmcSubloops.Clear();
+            for (int i = 0; i < Channels.Length; i++)
+            {
+                Channels[i].ClearChannel();
+                Subloops[i].Clear();
+            }
         }
+
+        public int GetChannelLength(int idx)
+        {
+            PropertyInfo property = Channels[idx].GetType().GetProperty("Count");
+            return (int)property.GetValue(Channels[idx]);
+        }
+
+        public byte[] GetChannelEntry(int channel, int entry)
+        {
+            return Channels[channel].GetEntryBytes(entry);
+        }
+
+        public byte[] GetFullByteData()
+        {
+            List<byte> SerializedChart = new();
+            for(int i = 0; i < Channels.Length; i++)
+            {
+                SerializedChart.AddRange(BitConverter.GetBytes(GetChannelLength(i)));
+                SerializedChart.AddRange(Channels[i].GetEntryBytes());
+                SerializedChart.AddRange(BitConverter.GetBytes(Subloops[i].Count));
+                foreach (Subloop loop in Subloops[i])
+                {
+                    SerializedChart.AddRange(loop.GetLoopDataBytes());
+                }
+            }
+            return SerializedChart.ToArray();
+        }
+
+        public int GetNextInt(byte[] buffer, ref int index)
+        {
+            byte[] intArray = new byte[4];
+            Array.Copy(buffer, index, intArray, 0, 4);
+            index += 4;
+            return BitConverter.ToInt32 (intArray, 0);
+        }
+
+        public void ReadByteData(byte[] buffer)
+        {
+
+            Clear();
+            //TODO - make this more... not like this.
+            int[] widths = [7, 7, 6, 3, 2];
+            int loopWidth = (3 * sizeof(int));
+
+            int bufferIdx = 0;
+            int chunkLength = 0;
+            for(int i = 0; i < Channels.Length; i++)
+            {
+                //chunk 1 = tracker data
+                chunkLength = GetNextInt(buffer, ref bufferIdx) * widths[i];
+                byte[] chunkArray = new byte[chunkLength];
+                Array.Copy(buffer, bufferIdx, chunkArray, 0, chunkArray.Length);
+                bufferIdx += chunkLength;
+                Channels[i].ReadEntryBytes(chunkArray, widths[i]);
+
+                //chunk 2 = loop data - always 3 bytes long each
+                chunkLength = GetNextInt(buffer, ref bufferIdx) * loopWidth;
+                int maxIndex = bufferIdx + chunkLength;
+                while(bufferIdx < maxIndex)
+                {
+                    int start = GetNextInt(buffer, ref bufferIdx);
+                    int end = GetNextInt(buffer, ref bufferIdx);
+                    int count = GetNextInt(buffer, ref bufferIdx);
+                    Subloops[i].Add(new Subloop(start, end, count));
+                }
+            }
+        }
+
     }
     public class Sequencer
     {
@@ -152,55 +205,7 @@ namespace CatfortSound.SoundEngine
             new byte[] { 0, 0, 0, 0, 0, 1, 1, 1, 2 },
         };
 
-        public Sequence seqChart;
-
-        public readonly byte[] SqTest = { Ins.VolEffect, 0x03, Ins.ModEffect, 0x00, Ins.DutyEffect, 0x00,
-                                                    Len.l8, NoteClass.A2, NoteClass.E4, NoteClass.G3, NoteClass.Fs3, NoteClass.D4, NoteClass.G3,
-                                                    NoteClass.D3, NoteClass.E4, NoteClass.G3, NoteClass.Fs3, NoteClass.D4, NoteClass.G3,
-                                                    NoteClass.C3, NoteClass.B3, Len.l4, NoteClass.G3, NoteClass.B2,
-                                                    Len.l8, NoteClass.A2, NoteClass.E4, NoteClass.G3, NoteClass.Fs3, NoteClass.D4, NoteClass.G3,
-                                                    NoteClass.A2, NoteClass.E4, NoteClass.A3, NoteClass.E3, NoteClass.B3, NoteClass.A3,
-                                                    NoteClass.A2, NoteClass.E4,
-                                                    Ins.VolEffect, 0x00, Len.l4, Ins.ModEffect, 0x05, NoteClass.G4, Ins.ModEffect, 0x01, NoteClass.B4, Len.d2, NoteClass.C5, 
-                                                    Len.l4, Ins.ModEffect, 0x05, NoteClass.C5, Ins.ModEffect, 0x01, NoteClass.D5, NoteClass.Fs4,
-                                                    Len.d2, NoteClass.Gs4, Ins.ModEffect, 0x00, NoteClass.rest, NoteClass.rest, NoteClass.rest,
-                                                    Ins.Loop
-        };
-
-        public readonly byte[] Sq2Test = { Ins.VolEffect, 0x00, Ins.ModEffect, 0x01, Ins.DutyEffect, 0x02,
-                                                    Len.l2, NoteClass.A4, Len.l4, Ins.ModEffect, 0x03, NoteClass.A4, Len.l8, Ins.ModEffect, 0x01, NoteClass.E5, Len.d4, NoteClass.E5, Len.l4, Ins.ModEffect, 0x04, NoteClass.E5,
-                                                    Ins.VolEffect, 0x04, Ins.ModEffect, 0x05, NoteClass.A4, Ins.ModEffect, 0x00, NoteClass.B4, NoteClass.G4, Ins.VolEffect, 0x00, Ins.ModEffect, 0x01, Len.d2, NoteClass.A4,
-                                                    Len.d2, Ins.ModEffect, 0x00, NoteClass.rest,
-                                                    Len.l4, NoteClass.rest, Ins.ModEffect, 0x05, NoteClass.E5, Ins.ModEffect, 0x01, NoteClass.G5, Len.l2, NoteClass.A5, Len.l4, NoteClass.G5, 
-                                                    Ins.ModEffect, 0x05, NoteClass.E5, Ins.ModEffect, 0x01, NoteClass.Fs5, NoteClass.D5,
-                                                    Len.d2, NoteClass.E5, Ins.ModEffect, 0x00, NoteClass.rest, NoteClass.rest, NoteClass.rest,
-
-                                                    Ins.Loop 
-        
-        };
-
-        public readonly byte[] TriTest = { Ins.VolEffect, 0x05, 
-                                            Len.d4, NoteClass.A3, Len.l4, NoteClass.A3, Len.l8, NoteClass.A3, Len.l4, NoteClass.E3, NoteClass.G3, NoteClass.B3,
-                                            NoteClass.F3, NoteClass.E3, NoteClass.B3,
-                                            Len.d4, NoteClass.A3, Len.l4, NoteClass.A3, Len.l8, NoteClass.A3, Len.l4, NoteClass.E3, NoteClass.G3, NoteClass.B3,
-
-                                            Len.d4, NoteClass.A3, Len.l4, NoteClass.A3, Len.l8, NoteClass.A3, Len.l4, NoteClass.C4, NoteClass.B3, NoteClass.F3,
-                                            NoteClass.G4, NoteClass.E4, NoteClass.C4,
-                                            Len.d4, NoteClass.B3, Len.l4, NoteClass.B3, Len.l8, NoteClass.B3, Len.l4, NoteClass.F3, NoteClass.A3, NoteClass.C4,
-                                            Len.d4, NoteClass.B3, Len.l4, NoteClass.B3, Len.l8, NoteClass.B3, Len.l4, NoteClass.F3, NoteClass.A3, NoteClass.C4,
-                                            Ins.Loop 
-        };
-
-
-        public readonly byte[] NoiseTest = { Ins.VolEffect, 0x02, Ins.ModEffect, 0x00, 
-                                             Len.l8, 0x4, 0x4, Ins.VolEffect, 0x05, 0x4, Ins.VolEffect, 0x02, 0x4, 0x4, 0x4,
-                                             Len.l4, Ins.VolEffect, 0x05, 0x4, 0x4, 0x4, Ins.Loop
-        
-        };
-
-        public readonly byte[] DMCTest = { Len.l4, 0x1B, Len.l8, 0x1B, Len.l4, 0x0B, Len.l8, 0x0B, Len.l4, 0x1B, Len.l8, 0x1B, Len.l16, 0x1B, 0x1B, Len.l4, 0x0B, Ins.Loop 
-        };
-
+        public SongChart SongChart;
 
         //ticks per 32nd note
         public APU? apuReference = null;
@@ -208,58 +213,32 @@ namespace CatfortSound.SoundEngine
         bool use8 = false;
         int Tempo32 = 3;
 
-        private OscTrack sqTrack;
-        private OscTrack sq2Track;
-        private OscTrack triTrack;
-        private OscTrack noiseTrack;
-        private DMCTrack dmcTrack;
-
-        int DMCIndex = -1;
-        int DMCTicksRemaining = 0;
-
-        //public NoteTables.Notes GetSquare2Pitch() => Sq2Test[Sq2Index].Pitch;
-
-        //public NoteTables.Notes GetTrianglePitch() => TriTest[TrIndex].Pitch;
-
-        //public NoteTables.Notes GetNoisePitch() => NoiseTest[NoiseIndex].Pitch;
-
-        //public DMC.Samples GetDMCSample() => DMCTest[DMCIndex].Sample;
+        private Track[] tracks = new Track[5];
 
         public Sequencer(APU? apu)
         {
             apuReference = apu;
 
-            seqChart = new Sequence();
+            SongChart = new SongChart();
 
-            sqTrack = new(this, seqChart.pulse1Sequence, seqChart.pulse1Subloops, Mixer.SQUARE_1);
-            sq2Track = new(this, seqChart.pulse2Sequence, seqChart.pulse2Subloops, Mixer.SQUARE_2);
-            triTrack = new(this, seqChart.triangleSequence, seqChart.triangleSubloops, Mixer.TRIANGLE);
-            noiseTrack = new(this, seqChart.noiseSequence, seqChart.noiseSubloops, Mixer.NOISE);
-            dmcTrack = new(this, seqChart.dmcSequence, seqChart.dmcSubloops, Mixer.DMC);
-        }
-
-        public void Reload()
-        {
-            sqTrack.LoadSequenceData(seqChart.pulse1Sequence, seqChart.pulse1Subloops);         
-            sq2Track.LoadSequenceData(seqChart.pulse2Sequence, seqChart.pulse2Subloops);        
-            triTrack.LoadSequenceData(seqChart.triangleSequence, seqChart.triangleSubloops);          
-            noiseTrack.LoadSequenceData(seqChart.noiseSequence, seqChart.noiseSubloops);          
-            dmcTrack.LoadSequenceData(seqChart.dmcSequence, seqChart.dmcSubloops);
-            Reset();
+            tracks[0] = new OscTrack(this, (int)ChannelIndexes.SQUARE_1);
+            tracks[1] = new OscTrack(this, (int)ChannelIndexes.SQUARE_2);
+            tracks[2] = new OscTrack(this, (int)ChannelIndexes.TRIANGLE);
+            tracks[3] = new OscTrack(this, (int)ChannelIndexes.NOISE);
+            tracks[4] = new DMCTrack(this, (int)ChannelIndexes.DMC);
         }
 
         public void Reset()
         {
-            sqTrack.Reset(); 
-            sq2Track.Reset();
-            triTrack.Reset();
-            noiseTrack.Reset();
-            dmcTrack.Reset();
+            foreach(var track in tracks)
+            {
+                track.Reset();
+            }
         }
 
         public void ClearSequencer()
         {
-            seqChart.Clear();
+            SongChart.Clear();
             Reset();
         }
 
@@ -273,22 +252,28 @@ namespace CatfortSound.SoundEngine
         {
             int dirtyFlags = 0;
 
-            if(sqTrack.TickTrack(Tempo32, use8))
+            int idx = 0;
+            foreach(var track in tracks)
             {
-                dirtyFlags |= 128;
+                bool looped = track.TickTrack(Tempo32, use8);
+                if(idx == 0 && looped)
+                {
+                    dirtyFlags |= 128;
+                }
             }
-            
-            sq2Track.TickTrack(Tempo32, use8);
-            triTrack.TickTrack(Tempo32, use8);
-            noiseTrack.TickTrack(Tempo32, use8);
-            dmcTrack.TickTrack(Tempo32, use8);
-
             return dirtyFlags;
         }
     }
 
     public class Subloop
     {
+        public Subloop(int startIndex, int endIndex, int count)
+        {
+            loopStartIndex = startIndex;
+            loopEndIndex = endIndex;
+            loopCount = count;
+        }
+
         public Subloop()
         {
             loopStartIndex = -1;
@@ -298,14 +283,23 @@ namespace CatfortSound.SoundEngine
         public int loopStartIndex { get; set; } // where to return when the loop instrtuction is played
         public int loopEndIndex { get; set; } // where to insert the loop instruction 
         public int loopCount { get; set; } //how many times to loop before skipping the loop instruction
+
+        public byte[] GetLoopDataBytes()
+        {
+            List<byte> loopData = new List<byte>();
+            loopData.AddRange(BitConverter.GetBytes(loopStartIndex));
+            loopData.AddRange(BitConverter.GetBytes(loopEndIndex));
+            loopData.AddRange(BitConverter.GetBytes(loopCount));
+
+            return loopData.ToArray();
+        }
     }
 
     public class Track
     {
-        protected IEnumerable<SequenceEntry> sequenceData;
-        protected List<Subloop> subLoopList;
+
+        protected Sequencer? parent;
         protected byte[] sequence = { };
-        protected Sequencer? parent = null;
         protected int targetChannel = 0;
 
         protected int ticksRemaining = 0;
@@ -315,12 +309,12 @@ namespace CatfortSound.SoundEngine
         protected int entryIndex = -1;
 
         protected int seqLength => sequence?.Length ?? 0;
-        protected int dataLength => sequenceData.Count();
+        protected int dataLength => parent?.SongChart.GetChannelLength(targetChannel) ?? 0;
+        protected ObservableCollection<Subloop> channelSubloops => parent.SongChart.Subloops[targetChannel];
 
         //only allow one for now
         protected int subLoopIndex = -1;
         protected int subLoopCounter = -1;
-
 
         public void Reset()
         {
@@ -330,31 +324,23 @@ namespace CatfortSound.SoundEngine
             entryIndex = -1;
             sequence = new byte[] { };
 
-            bool hasSubLoops = subLoopList.Count > 0;
+            bool hasSubLoops = channelSubloops.Count > 0;
             subLoopIndex = hasSubLoops? 0 : -1;
-            subLoopCounter = hasSubLoops ? subLoopList[subLoopIndex].loopCount : -1;
-        }
-
-        public void LoadSequenceData(IEnumerable<SequenceEntry> data, List<Subloop> loops)
-        {
-            sequenceData = data;
-            subLoopList = loops;
+            subLoopCounter = hasSubLoops ? channelSubloops[subLoopIndex].loopCount : -1;
         }
 
         protected void IncEntryIndex(int ticks = 1) => entryIndex = Math.Clamp(entryIndex + ticks, 0, dataLength);
         protected void IncSeqIndex(int ticks = 1) => seqIndex = Math.Clamp(seqIndex + ticks, 0, seqLength);
 
-        public Track(Sequencer? parent, IEnumerable<SequenceEntry> data, List<Subloop> loops, int targetChannel)
+        public Track(Sequencer? parent, int targetChannel)
         {
             this.parent = parent;
-            this.sequenceData = data;
             this.targetChannel = targetChannel;
-            this.subLoopList = loops;
         }
 
         public virtual bool TickTrack(int Tempo32, bool use8)
         {
-            if (sequenceData is null || sequenceData.Count() == 0 || parent is null)
+            if (parent is null)
             {
                 return false;
             }
@@ -369,14 +355,14 @@ namespace CatfortSound.SoundEngine
                     entryIndex = 0;
 
                     //song loops, reset the subloop system
-                    bool hasSubLoops = subLoopList.Count > 0;
+                    bool hasSubLoops = channelSubloops.Count > 0;
                     subLoopIndex = hasSubLoops ? 0 : -1;
-                    subLoopCounter = hasSubLoops ? subLoopList[subLoopIndex].loopCount : -1;
+                    subLoopCounter = hasSubLoops ? channelSubloops[subLoopIndex].loopCount : -1;
 
                     trackLooped = true;
                 }
 
-                sequence = sequenceData.ElementAt<SequenceEntry>(entryIndex).GetEntryBytes();
+                sequence = parent.SongChart.GetChannelEntry(targetChannel, entryIndex);
                 seqIndex = 0;
                 while (seqIndex < seqLength)
                 {
@@ -408,13 +394,13 @@ namespace CatfortSound.SoundEngine
         private void ProcessLoop()
         {
             //if we don't have proper loop indexes, bail out
-            if(subLoopList is null || subLoopList.Count == 0 || subLoopIndex == -1)
+            if(channelSubloops is null || channelSubloops.Count == 0 || subLoopIndex == -1)
             {
                 return;
             }
 
             //otherwise, check if the current entry index matches the current subloop end index
-            if(entryIndex == subLoopList[subLoopIndex].loopEndIndex)
+            if(entryIndex == channelSubloops[subLoopIndex].loopEndIndex)
             {
                 //this was the same note as the end of the loop - decrement the loop count
                 subLoopCounter--;
@@ -422,20 +408,20 @@ namespace CatfortSound.SoundEngine
                 {
                     //that was the last loop for this sub loop, increment the loop index, don't update the entry index
                     subLoopIndex++;
-                    if(subLoopIndex == subLoopList.Count)
+                    if(subLoopIndex == channelSubloops.Count)
                     {
                         //kill the subloop system if the song ends - track looping will reset this instead
                         subLoopIndex = -1;
                     }
                     else
                     {
-                        subLoopCounter = subLoopList[subLoopIndex].loopCount;
+                        subLoopCounter = channelSubloops[subLoopIndex].loopCount;
                     }
                 }
                 else 
                 {
                     //set the entry point - entry indexes are incremented at the beginning of processing, so we'll go for one before
-                    entryIndex = subLoopList[subLoopIndex].loopStartIndex - 1;
+                    entryIndex = channelSubloops[subLoopIndex].loopStartIndex - 1;
                 }
             }
         }
@@ -449,19 +435,19 @@ namespace CatfortSound.SoundEngine
             }
             switch (val)
             {
-                case Ins.VolEffect:
+                case (int)Instructions.VolEffect:
                     parent.apuReference?.SetOscilatorEffect(new VolEffect(parent.VolEffects[sequence[seqIndex + 1]]), targetChannel);
                     IncSeqIndex(2);
                     break;
-                case Ins.ModEffect:
+                case (int)Instructions.ModEffect:
                     parent.apuReference?.SetOscilatorEffect(new ModEffect(parent.ModEffects[sequence[seqIndex + 1]]), targetChannel);
                     IncSeqIndex(2);
                     break;
-                case Ins.ArpEffect:
+                case (int)Instructions.ArpEffect:
                     parent.apuReference?.SetOscilatorEffect(new ArpEffect(parent.ArpEffects[sequence[seqIndex + 1]]), targetChannel);
                     IncSeqIndex(2);
                     break;
-                case Ins.DutyEffect:
+                case (int)Instructions.DutyEffect:
                     parent.apuReference?.SetOscilatorEffect(new DutyEffect(parent.DutyEffects[sequence[seqIndex + 1]]), targetChannel);
                     IncSeqIndex(2);
                     break;
@@ -480,7 +466,7 @@ namespace CatfortSound.SoundEngine
 
     public class DMCTrack : Track
     {
-        public DMCTrack(Sequencer? parent, IEnumerable<SequenceEntry> data, List<Subloop> loops, int targetChannel) : base(parent, data, loops, targetChannel)
+        public DMCTrack(Sequencer? parent, int targetChannel) : base(parent, targetChannel)
         {
 
         }
@@ -504,7 +490,7 @@ namespace CatfortSound.SoundEngine
     public class OscTrack : Track
     {
 
-        public OscTrack(Sequencer? parent, IEnumerable<SequenceEntry> data, List<Subloop> loops, int targetChannel) : base(parent, data, loops, targetChannel)
+        public OscTrack(Sequencer? parent, int targetChannel) : base (parent, targetChannel) 
         {
         }
     }

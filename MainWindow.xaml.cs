@@ -1,5 +1,8 @@
 ﻿using System.ComponentModel;
+using System.Configuration;
 using System.Diagnostics;
+using System.Media;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security.RightsManagement;
 using System.Text;
@@ -16,6 +19,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Xml;
 using CatfortSound.SoundEngine;
+using CatfortSound.ViewModels;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.MusicTheory;
 using Microsoft.Win32;
@@ -36,8 +40,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private double m_timeLastFrame;
     private double m_frameTimer;
     private double m_clockTimer;
-    private APU AudioProcessor = new APU();
-    private Sequencer NoteRoll;
+    private APU AudioProcessor = new();
+    private Sequencer Sequencer;
 
     const double frameTime = 16.67;
 
@@ -45,6 +49,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     string currentPath = "";
     string exportPath = "";
 
+    System.Collections.IList clipboard;
+
+    bool mouseDown;
+    FrameworkElement? cellToEdit;
+    Vector mousePosRecord = new();
+    bool mouseHeld = false;
+
+    public List<Slider> volumeSliders = new List<Slider>();
+    public object[] ViewModels = new object[5]; 
+    public DataGrid[] TrackerLists = new DataGrid[5];
+    public DataGrid[] LoopLists = new DataGrid[5];
 
     private bool audioActive = false;
     public bool AudioActive
@@ -86,26 +101,50 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public MainWindow()
     {
         InitializeComponent();
-        NoteRoll = new Sequencer(AudioProcessor);
+        Sequencer = new Sequencer(AudioProcessor);
         InitAudioUpdate();
         CompositionTarget.Rendering += RenderUpdate;
-
-        ResetDataHookups();
 
         sq1_vol.Value = 1;
         sq2_vol.Value = 1;
         tri_vol.Value = 1;
         noi_vol.Value = 1;
         dmc_vol.Value = 1;
+
+        volumeSliders.Add(sq1_vol);
+        volumeSliders.Add(sq2_vol);
+        volumeSliders.Add(tri_vol);
+        volumeSliders.Add(noi_vol);
+        volumeSliders.Add(dmc_vol);
+
+        ViewModels[0] = new EntryViewModel<PulseEntry>(Sequencer.SongChart.Channels[0] as System.Collections.IList);
+        ViewModels[1] = new EntryViewModel<PulseEntry>(Sequencer.SongChart.Channels[1] as System.Collections.IList);
+        ViewModels[2] = new EntryViewModel<OscEntry>(Sequencer.SongChart.Channels[2] as System.Collections.IList);
+        ViewModels[3] = new EntryViewModel<NoiseEntry>(Sequencer.SongChart.Channels[3] as System.Collections.IList);
+        ViewModels[4] = new EntryViewModel<DMCEntry>(Sequencer.SongChart.Channels[4] as System.Collections.IList);
+
+        LoopLists[0] = p1Subloops;
+        LoopLists[1] = p2Subloops;
+        LoopLists[2] = tSubloops;
+        LoopLists[3] = nSubloops;
+        LoopLists[4] = dmcSubloops;
+
+        TrackerLists[0] = p1Grid;
+        TrackerLists[1] = p2Grid;
+        TrackerLists[2] = tGrid;
+        TrackerLists[3] = nGrid;
+        TrackerLists[4] = dmcGrid;
+
+        HookupMVVM();
+
     }
 
     protected void RenderUpdate(object? sender, EventArgs? e)
     {
-        AudioProcessor.UpdateVolume(Mixer.SQUARE_1, (float)sq1_vol.Value);
-        AudioProcessor.UpdateVolume(Mixer.SQUARE_2, (float)sq2_vol.Value);
-        AudioProcessor.UpdateVolume(Mixer.TRIANGLE, (float)tri_vol.Value);
-        AudioProcessor.UpdateVolume(Mixer.NOISE, (float)noi_vol.Value);
-        AudioProcessor.UpdateVolume(Mixer.DMC, (float)dmc_vol.Value);
+        for(int i = 0; i < volumeSliders.Count; i++)
+        {
+            AudioProcessor.UpdateVolume(i, (float)volumeSliders[i].Value);
+        }
 
         play_button.IsEnabled = IsPlayEnabled;
         stop_button.IsEnabled = IsStopEnabled;
@@ -150,7 +189,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     void DoFrameUpdate()
     {
-        int dirtyChannels = NoteRoll.TickSequence();
+        int dirtyChannels = Sequencer.TickSequence();
  
         AudioProcessor.FrameTick();
 
@@ -162,26 +201,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
-    void ResetDataHookups()
+    void HookupMVVM()
     {
-        p1Grid.ItemsSource = NoteRoll.seqChart.pulse1Sequence;
-        p1Subloops.ItemsSource = NoteRoll.seqChart.pulse1Subloops;
-        p2Grid.ItemsSource = NoteRoll.seqChart.pulse2Sequence;
-        p2Subloops.ItemsSource = NoteRoll.seqChart.pulse2Subloops;
-        tGrid.ItemsSource = NoteRoll.seqChart.triangleSequence;
-        tSubloops.ItemsSource = NoteRoll.seqChart.triangleSubloops;
-        nGrid.ItemsSource = NoteRoll.seqChart.noiseSequence;
-        nSubloops.ItemsSource = NoteRoll.seqChart.noiseSubloops;
-        dmcGrid.ItemsSource = NoteRoll.seqChart.dmcSequence;
-        dmcSubloops.ItemsSource = NoteRoll.seqChart.dmcSubloops;
+        for(int i = 0; i < ViewModels.Length; i++) 
+        {
+            MethodInfo BindToGrid = ViewModels[i].GetType().GetMethod("BindToDataGrid");
+            BindToGrid.Invoke(ViewModels[i], new object[] { TrackerLists[i] });
+
+            LoopLists[i].ItemsSource = Sequencer.SongChart.Subloops[i];
+        }
     }
 
     private void play_button_Click(object sender, RoutedEventArgs e)
     {
         AudioActive = true;
         AudioProcessor.ResetChannels();
-        NoteRoll.Reload();
-        NoteRoll.SetTempo(int.Parse(tempo.Text), use8Toggle.IsChecked);
+        Sequencer.Reset();
+        Sequencer.SetTempo(int.Parse(tempo.Text), use8Toggle.IsChecked);
         
         m_deltaTime = 0;
         m_frameTimer = 0;
@@ -208,7 +244,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         if (confirmOpen == MessageBoxResult.OK)
         {
-            NoteRoll.ClearSequencer();
+            Sequencer.ClearSequencer();
 
             p1Grid.Items.Refresh();
             p1Subloops.Items.Refresh();
@@ -216,6 +252,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             tGrid.Items.Refresh();
             nGrid.Items.Refresh();
             dmcGrid.Items.Refresh();
+            TestGrid.Items.Refresh();
 
             currentFileName = "newSong";
             currentPath = "";
@@ -234,12 +271,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             openFileDialog.Filter = "CFS (*.cfs)|*.cfs";
             if (openFileDialog.ShowDialog() == true)
             {
-                string json = System.IO.File.ReadAllText(openFileDialog.FileName);
+                //string json = System.IO.File.ReadAllText(openFileDialog.FileName);
+                byte[] fileByte = System.IO.File.ReadAllBytes(openFileDialog.FileName);
 
-                NoteRoll.seqChart = JsonConvert.DeserializeObject<Sequence>(json);
-                NoteRoll.Reload();
-
-                ResetDataHookups();
+                Sequencer.SongChart.ReadByteData(fileByte);
+                Sequencer.Reset();
 
                 currentPath = openFileDialog.FileName;
                 currentFileName = openFileDialog.SafeFileName;
@@ -280,8 +316,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         if (doSave == true)
         {
-            string json = JsonConvert.SerializeObject(NoteRoll.seqChart, Newtonsoft.Json.Formatting.Indented);
-            System.IO.File.WriteAllText(currentPath, json);
+            //string json = JsonConvert.SerializeObject(NoteRoll.seqChart, Newtonsoft.Json.Formatting.Indented);
+            //System.IO.File.WriteAllText(currentPath, json);
+            //different version, more manual - reads and print bytes directly for the roll system
+            byte[] chartBytes = Sequencer.SongChart.GetFullByteData();
+            System.IO.File.WriteAllBytes(currentPath, chartBytes);
+            
         }
 
     }
@@ -404,57 +444,100 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     }
 
-    private void PulseGridCopy(object sender, KeyEventArgs e)
+    private void Copy(object sender, KeyEventArgs e)
     {
-        //if(!(e.Key == Key.V && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control))
-        //{
-        //    return;
-        //}
+        if (sender is not DataGrid dataGrid) { return; }
 
-        //if(sender is not DataGrid dataGrid)
-        //{
-        //    return;
-        //}
+        if (dataGrid.SelectedIndex == -1) { return; }
 
-        //var List = dataMap[dataGrid];
+        if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+        {
+            if (!(e.Key == Key.C || e.Key == Key.V))
+            {
+                return;
+            }
+        }
 
-        //int selection = dataGrid.SelectedIndex;
+        // to make things simpler with generics, we'll do some grody reflection work
+        if (e.Key == Key.C)
+        {
+            Type genType = dataGrid.SelectedItems[0].GetType();
+            if (!genType.IsSubclassOf(typeof(SequenceEntry))) { return; }
 
-        //PulseEntry? entryToCopy = List.ElementAt<SequenceEntry>(selection) as PulseEntry;
-        
-        //if(entryToCopy is null)
-        //{
-        //    return;
-        //}
+            MethodInfo copyMethod = GetType().GetMethod("CopyListToClipboard");
+            MethodInfo genericCopy = copyMethod.MakeGenericMethod(genType);
+            genericCopy.Invoke(this, new object[] {dataGrid.SelectedItems});
+        }
+        else if (e.Key == Key.V)
+        {
+            if (clipboard == null || clipboard.Count <= 0) { return; }
 
-        //PulseEntry newEntry = new PulseEntry(entryToCopy)
-
-
-    }
-    private void TriangleGridCopy(object sender, KeyEventArgs e)
-    {
-        //if (!(e.Key == Key.V && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control))
-        //{
-        //    return;
-        //}
-
+            MethodInfo pasteMethod = dataGrid.DataContext.GetType().GetMethod("PasteList");
+            pasteMethod.Invoke(dataGrid.DataContext, new object[] { clipboard, dataGrid.SelectedIndex });
+        }
     }
 
-    private void NoiseGridCopy(object sender, KeyEventArgs e)
+    public void CopyListToClipboard<T>(System.Collections.IList inList)
     {
-        //if (!(e.Key == Key.V && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control))
-        //{
-        //    return;
-        //}
-
+        clipboard?.Clear();
+        clipboard = new List<T>();
+        foreach (var item in inList)
+        {
+            clipboard.Add(((T)item).DeepClone());
+        }
     }
 
-    private void DMCGridCopy(object sender, KeyEventArgs e)
+    private void BeginCellEdit(object sender, DataGridPreparingCellForEditEventArgs e)
     {
-        //if (!(e.Key == Key.V && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control))
-        //{
-        //    return;
-        //}
-
+        Debug.WriteLine(e.EditingElement.ToString());
+        cellToEdit = e.EditingElement;
     }
+
+    private void EndCellEdit(object sender, DataGridCellEditEndingEventArgs e)
+    {
+        cellToEdit = null;
+    }
+
+    //private void p1Grid_MouseMove(object sender, MouseEventArgs e)
+    //{
+    //    if(cellToEdit == null) { return; }
+    //    int val = cellToEdit switch
+    //    {
+    //        ComboBox => ((ComboBox)cellToEdit).SelectedIndex,
+    //        TextBox _ => int.Parse(((TextBox)cellToEdit).Text),
+    //        _ => throw new NotImplementedException(),
+    //    };
+
+    //    Point position = e.GetPosition(this);
+    //    Vector posVec = new Vector(position.X, position.Y);
+
+    //    if(mouseDown)
+    //    {
+    //        Vector diff = (posVec - mousePosRecord);
+    //        double yChange = diff.Y;
+    //        val += (int)(yChange / 10.0);
+    //        if (cellToEdit is ComboBox comboBox)
+    //        {
+    //            comboBox.SelectedIndex = val;
+    //        }
+    //        else if (cellToEdit is TextBox textBox)
+    //        {
+    //            textBox.Text = val.ToString();
+    //        }
+    //    }
+
+    //    mousePosRecord = posVec;
+    //}
+
+    //private void p1Grid_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    //{
+    //    mouseDown = true;
+    //    Debug.WriteLine("down");
+    //}
+
+    //private void p1Grid_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    //{
+    //    mouseDown = false;
+    //    Debug.WriteLine("up");
+    //}
 }
