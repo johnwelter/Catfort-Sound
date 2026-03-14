@@ -197,11 +197,11 @@ namespace CatfortSound.SoundEngine.Effects
                         break;
                     case LOOP_PART:
                         IncTicks();
-                        m_ticks -= val;
+                        m_ticks -= GetEffectValue(m_ticks);
                         break;
                     case START_DELAY:
                         IncTicks();
-                        delayTimer = val;
+                        delayTimer = GetEffectValue(m_ticks);
                         processedTick = true;
                         break;
                     default:

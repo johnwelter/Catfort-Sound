@@ -8,13 +8,22 @@
     <UseWPF>true</UseWPF>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Platforms>AnyCPU;x86</Platforms>
+    <ApplicationIcon>Icons\cf_logo.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Icons\cf_logo.ico" />
     <None Remove="Icons\cf_logo.png" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Icons\cf_logo.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Icons\cf_logo.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Icons\cf_logo.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>

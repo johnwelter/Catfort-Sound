@@ -6,7 +6,8 @@
         xmlns:local="clr-namespace:CatfortSound"
         mc:Ignorable="d"
         Title="Catfort Sound
-        " Height="832" Width="729"
+        " Height="832" Width="909"
+        SizeToContent="Width"
         >
     <Window.Resources>
         <Thickness x:Key="tbMargin">0, 0, 0, 0</Thickness>
@@ -183,6 +184,16 @@
                     </TabItem>
                 </TabControl>
             </DockPanel>
+            <StackPanel x:Name="UI_EffectEditorStack" Width="415">
+                <Grid x:Name="UI_EffectCurveView" Height="251">
+                    <Canvas x:Name="UI_CurveViewCanvas" Margin="30,20,30,20" Background="#FF5A4545"/>
+                </Grid>
+                <StackPanel Orientation="Horizontal" Height="155" HorizontalAlignment="Center">
+                    <Slider x:Name="UI_AttackSlider" Orientation="Vertical" Margin="40,0,40,0"/>
+                    <Slider x:Name="UI_SustainSlider" Orientation="Vertical" Margin="40,0,40,0"/>
+                    <Slider x:Name="UI_DecaySlider"  Orientation="Vertical" Margin="40,0,40,0"/>
+                </StackPanel>
+            </StackPanel>
         </StackPanel>
 
 
