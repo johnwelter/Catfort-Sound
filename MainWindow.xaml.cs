@@ -233,14 +233,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (confirmOpen == MessageBoxResult.OK)
         {
             Sequencer.ClearSequencer();
-
-            p1Grid.Items.Refresh();
-            p1Subloops.Items.Refresh();
-            p2Grid.Items.Refresh();
-            tGrid.Items.Refresh();
-            nGrid.Items.Refresh();
-            dmcGrid.Items.Refresh();
-
             currentFileName = "newSong";
             currentPath = "";
             exportPath = "";
@@ -307,12 +299,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void Toolbar_Export(object sender, RoutedEventArgs e)
     {
-        string expPath = "";
-
-        expPath = currentFileName;
-
         SaveFileDialog saveFileDialog = new SaveFileDialog();
-        saveFileDialog.FileName = expPath;
+        saveFileDialog.FileName = currentFileName;
         saveFileDialog.Filter = "ASM (*.asm)|*.asm";
         if (saveFileDialog.ShowDialog() == true)
         {
@@ -350,19 +338,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // to make things simpler with generics, we'll do some grody reflection work
         if (e.Key == Key.C)
         {
-            Type genType = dataGrid.SelectedItems[0].GetType();
-            if (!genType.IsSubclassOf(typeof(SequenceEntry))) { return; }
+            Type? genType = dataGrid?.SelectedItems[0]?.GetType();
+            if (!genType?.IsSubclassOf(typeof(SequenceEntry)) ?? false) { return; }
+            if(genType == null) { return; }
 
-            MethodInfo copyMethod = GetType().GetMethod("CopyListToClipboard");
-            MethodInfo genericCopy = copyMethod.MakeGenericMethod(genType);
-            genericCopy.Invoke(this, new object[] {dataGrid.SelectedItems});
+            MethodInfo? copyMethod = GetType().GetMethod("CopyListToClipboard");
+            MethodInfo? genericCopy = copyMethod?.MakeGenericMethod(genType);
+            genericCopy?.Invoke(this, [dataGrid?.SelectedItems]);
         }
         else if (e.Key == Key.V)
         {
             if (clipboard == null || clipboard.Count <= 0) { return; }
 
-            MethodInfo pasteMethod = dataGrid.DataContext.GetType().GetMethod("PasteList");
-            pasteMethod.Invoke(dataGrid.DataContext, new object[] { clipboard, dataGrid.SelectedIndex });
+            MethodInfo? pasteMethod = dataGrid.DataContext.GetType().GetMethod("PasteList");
+            pasteMethod?.Invoke(dataGrid.DataContext, [clipboard, dataGrid.SelectedIndex]);
         }
     }
 
@@ -394,6 +383,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         contextWindow.Owner = this;
         
         var menuItem = sender as MenuItem;
+        if (menuItem == null) { return; }
+
         var dataGrid = ((ContextMenu)menuItem.Parent).PlacementTarget as DataGrid;
 
         int transposeAmount = 0;
@@ -401,7 +392,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         if(dataGrid is not null)
         {
-           
             foreach(OscEntry entry in dataGrid.SelectedItems)
             {
                 //don't transpose rests
