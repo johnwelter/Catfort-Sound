@@ -6,11 +6,16 @@
         xmlns:local="clr-namespace:CatfortSound"
         mc:Ignorable="d"
         Title="Catfort Sound
-        " Height="832" Width="1139"
+        " Height="832" Width="729"
         >
     <Window.Resources>
         <Thickness x:Key="tbMargin">0, 0, 0, 0</Thickness>
         <Thickness x:Key="buttonMargin">0, 10, 0, 0</Thickness>
+
+        <ContextMenu x:Key="OscContext">
+            
+        </ContextMenu>
+        
     </Window.Resources>
     <Grid >
         <Menu x:Name="UI_Menu"  DockPanel.Dock="Top">
@@ -81,10 +86,8 @@
                     </Button>
                     <Button x:Name="stop_button" Content="stop" Click="stop_button_Click" IsEnabled="False"/>
                     <StackPanel Orientation="Horizontal">
-                        <TextBox x:Name="tempo" Text="3" PreviewTextInput="Tempo_Validate" Width="42" VerticalAlignment="Center"/>
-                        <Label x:Name="framesPerLabel" Content="Frames per: "/>
-                        <CheckBox x:Name="use8Toggle" VerticalAlignment="Center"/>
-                        <Label x:Name="tempoBaseLabel" Content="32nd"/>
+                        <TextBox x:Name="tempo" Text="{Binding Tempo}" PreviewTextInput="Tempo_Validate" Width="42" VerticalAlignment="Center"/>
+                        <Label x:Name="framesPerLabel" Content="Tick add per frame (tempo)"/>
                     </StackPanel>
                 </StackPanel>
             </StackPanel>
@@ -94,7 +97,13 @@
                         <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
                             <ScrollViewer Height="500">
                                 <StackPanel>
-                                    <DataGrid x:Name="p1Grid" CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}"/>
+                                    <DataGrid x:Name="p1Grid" CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}">
+                                        <DataGrid.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Transpose..." Click="Transpose"/>
+                                            </ContextMenu>
+                                        </DataGrid.ContextMenu>
+                                    </DataGrid>
                                 </StackPanel>
                             </ScrollViewer>
                             <ScrollViewer Height="100">
@@ -108,7 +117,13 @@
                         <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
                             <ScrollViewer Height="500">
                                 <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
-                                    <DataGrid x:Name="p2Grid" CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}"/>
+                                    <DataGrid x:Name="p2Grid" CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}">
+                                        <DataGrid.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Transpose..." Click="Transpose"/>
+                                            </ContextMenu>
+                                        </DataGrid.ContextMenu>
+                                    </DataGrid>
                                 </StackPanel>
                             </ScrollViewer>
                             <ScrollViewer Height="100">
@@ -122,7 +137,13 @@
                         <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
                             <ScrollViewer Height="500">
                                 <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
-                                    <DataGrid x:Name="tGrid"  CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}"/>
+                                    <DataGrid x:Name="tGrid"  CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}">
+                                        <DataGrid.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Transpose..." Click="Transpose"/>
+                                            </ContextMenu>
+                                        </DataGrid.ContextMenu>
+                                    </DataGrid>
                                 </StackPanel>
                             </ScrollViewer>
                             <ScrollViewer Height="100">
@@ -162,10 +183,6 @@
                     </TabItem>
                 </TabControl>
             </DockPanel>
-            <StackPanel>
-                <DataGrid x:Name="TestGrid" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}">
-                </DataGrid>
-            </StackPanel>
         </StackPanel>
 
 

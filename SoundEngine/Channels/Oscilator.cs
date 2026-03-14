@@ -1,11 +1,14 @@
-﻿using Melanchall.DryWetMidi.MusicTheory;
+﻿using CatfortSound.SoundEngine.DataTables;
+using CatfortSound.SoundEngine.Effects;
+using Melanchall.DryWetMidi.MusicTheory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Notes = CatfortSound.SoundEngine.DataTables.Notes;
 
-namespace CatfortSound.SoundEngine
+namespace CatfortSound.SoundEngine.Channels
 {
     class Oscilator : Channel
     {
@@ -20,7 +23,7 @@ namespace CatfortSound.SoundEngine
 
         public Oscilator() : base()
         {
-            m_pitch = NoteClass.rest;
+            m_pitch = NoteConstants.Rest;
         }
 
         public virtual void SetPitch(int pitch)
@@ -29,15 +32,15 @@ namespace CatfortSound.SoundEngine
             Effects.ResetEffects();
         }
 
-        public override void FrameTick()
+        public override void FrameUpdate()
         {
-            base.FrameTick();
+            base.FrameUpdate();
             Effects.TickEffects();
         }
 
         public override float GenerateSample()
         {
-            if(m_pitch == -1 || m_pitch == NoteClass.rest)
+            if(m_pitch == -1 || m_pitch == NoteConstants.Rest)
             {
                 return 0;
             }
@@ -58,7 +61,7 @@ namespace CatfortSound.SoundEngine
         public override void Reset()
         {
             base.Reset();
-            m_pitch = NoteClass.rest;
+            m_pitch = NoteConstants.Rest;
             Effects.ClearAllEffect();
         }
 

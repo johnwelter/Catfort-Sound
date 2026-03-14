@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Animation;
 
-namespace CatfortSound.SoundEngine
+namespace CatfortSound.SoundEngine.Effects
 {
 
     public class EffectStack
@@ -22,6 +22,7 @@ namespace CatfortSound.SoundEngine
         }
 
         private Effect?[] stack = { null, null, null, null };
+        
         public bool HasEffect(EffectSlots slot) => stack[(int)slot] != null;
 
         internal void SetEffect(Effect effect)
@@ -39,6 +40,7 @@ namespace CatfortSound.SoundEngine
 
             stack[effectSlot] = effect;
         }
+        
         public void ClearEffect(EffectSlots slot)
         {
             stack[(int)slot] = null;
@@ -75,13 +77,22 @@ namespace CatfortSound.SoundEngine
     public class Effect
     {
         protected int m_ticks = -1;
-        protected byte[] m_effectBytes;
+        protected byte[]? m_effectBytes;
+        protected int GetEffectValue(int idx) => m_effectBytes?[idx] ?? 0;
+        protected int effectLength => m_effectBytes?.Length ?? 0;
 
         public int CurrentValue = 0;
 
-        public void IncTicks(int ticks = 1) => m_ticks = Math.Clamp(m_ticks + ticks, 0, m_effectBytes.Length - 1);
+        public void IncTicks(int ticks = 1) => m_ticks = Math.Clamp(m_ticks + ticks, 0, effectLength - 1);
+        
+        public Effect() { }
 
         public Effect(byte[] effectBytes)
+        {
+            SetEffectBytes(effectBytes);
+        }
+
+        public void SetEffectBytes(byte[] effectBytes)
         {
             m_effectBytes = effectBytes;
         }
@@ -89,7 +100,7 @@ namespace CatfortSound.SoundEngine
         public virtual void ResetEffect()
         {
             m_ticks = 0;
-            CurrentValue = m_effectBytes[0];
+            CurrentValue = GetEffectValue(0);
         }
 
         public void SetEffectTicks(int ticks)
@@ -106,6 +117,11 @@ namespace CatfortSound.SoundEngine
 
     public class VolEffect : Effect
     {
+        public VolEffect():base()
+        {
+
+        }
+
         public VolEffect(byte[] effectBytes) : base(effectBytes)
         {
 
@@ -114,23 +130,28 @@ namespace CatfortSound.SoundEngine
         public override void TickEffect()
         {
             base.TickEffect();
-            CurrentValue = m_effectBytes[m_ticks];
+            CurrentValue = GetEffectValue(m_ticks);
         }
     }
 
     public class ArpEffect : Effect
     {
+        public ArpEffect():base()
+        {
+
+        }
         public ArpEffect(byte[] effectBytes) : base(effectBytes)
         {
         }
         public override void TickEffect()
         {
             base.TickEffect();
-            if (m_effectBytes[m_ticks] == 0xFF)
+            int val = GetEffectValue(m_ticks);
+            if (val == 0xFF)
             {
                 m_ticks = 0;
             }
-            CurrentValue = m_effectBytes[m_ticks];
+            CurrentValue = val;
         }
     }
 
@@ -143,6 +164,10 @@ namespace CatfortSound.SoundEngine
 
         private int delayTimer = 0;
 
+        public ModEffect():base()
+        {
+
+        }
         public ModEffect(byte[] effectBytes) : base(effectBytes)
         {
         }
@@ -160,7 +185,7 @@ namespace CatfortSound.SoundEngine
             bool processedTick = false;
             while (!processedTick)
             {
-                int val = m_effectBytes[m_ticks];
+                int val = GetEffectValue(m_ticks);
 
                 switch (val)
                 {
@@ -172,15 +197,15 @@ namespace CatfortSound.SoundEngine
                         break;
                     case LOOP_PART:
                         IncTicks();
-                        m_ticks -= m_effectBytes[m_ticks];
+                        m_ticks -= val;
                         break;
                     case START_DELAY:
                         IncTicks();
-                        delayTimer = m_effectBytes[m_ticks];
+                        delayTimer = val;
                         processedTick = true;
                         break;
                     default:
-                        CurrentValue = m_effectBytes[m_ticks];
+                        CurrentValue = val;
                         processedTick = true;
                         break;
 
@@ -197,13 +222,17 @@ namespace CatfortSound.SoundEngine
 
     public class DutyEffect : Effect
     {
+        public DutyEffect():base()
+        {
+
+        }
         public DutyEffect(byte[] effectBytes) : base(effectBytes)
         {
         }
         public override void TickEffect()
         {
             base.TickEffect();
-            CurrentValue = m_effectBytes[m_ticks];
+            CurrentValue = GetEffectValue(m_ticks);
         }
     }
 }

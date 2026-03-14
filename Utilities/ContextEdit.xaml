@@ -1,0 +1,17 @@
+﻿<Window x:Class="CatfortSound.Utilities.ContextEdit"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CatfortSound.Utilities"
+        mc:Ignorable="d"
+        Title="ContextEdit" Height="140" Width="217"
+        WindowStartupLocation="CenterOwner">
+    <Grid>
+        <StackPanel VerticalAlignment="Center" Margin="10,0,10,0">
+            <Label x:Name="UI_Tooltip" Content="{Binding Tooltip}" Margin="0,0,0,10" Height="28"/>
+            <TextBox x:Name="UI_Value" Text="{Binding Value}" Height="26" TextWrapping="NoWrap" AcceptsReturn="False"/>
+            <Button x:Name="UI_Confirm" Height="22" Margin="20,10,20,10" Content="Confirm" Click="UI_Confirm_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

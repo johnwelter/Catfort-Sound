@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CatfortSound.SoundEngine
+namespace CatfortSound.SoundEngine.Channels
 {
     public class Channel
     {
@@ -73,7 +73,7 @@ namespace CatfortSound.SoundEngine
 
         public virtual void UpdateCurrentSample(int updateTicks) { }
 
-        public virtual void FrameTick() { }
+        public virtual void FrameUpdate() { }
 
         public virtual void Reset()
         {

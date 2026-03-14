@@ -1,11 +1,12 @@
-﻿using System;
+﻿using CatfortSound.SoundEngine.Effects;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CatfortSound.SoundEngine
+namespace CatfortSound.SoundEngine.Channels
 {
     class Noise : Oscilator
     {
@@ -39,7 +40,7 @@ namespace CatfortSound.SoundEngine
             for (int i = 0; i < updateTicks; i++)
             {
                 int b0 = ShiftRegister & 1;
-                int bXOR = ModeFlag ? (ShiftRegister >> 6) & 1 : (ShiftRegister >> 1) & 1;
+                int bXOR = ModeFlag ? ShiftRegister >> 6 & 1 : ShiftRegister >> 1 & 1;
                 int feedback = (b0 ^ bXOR) << 14;
                 ShiftRegister >>= 1;
                 ShiftRegister |= feedback;

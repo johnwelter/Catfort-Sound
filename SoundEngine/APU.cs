@@ -1,4 +1,9 @@
-﻿using System;
+﻿using CatfortSound.SoundEngine.Banks;
+using CatfortSound.SoundEngine.Channels;
+using CatfortSound.SoundEngine.DataTables;
+using CatfortSound.SoundEngine.Effects;
+using Ownaudio.Utilities.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Eventing.Reader;
@@ -14,96 +19,109 @@ namespace CatfortSound.SoundEngine
 
     public class APU
     {
-        private float m_masterVolume = 1.0f;
-        private float Volume() => m_masterVolume * APUConstants.BASE_VOLUME;
-        private Mixer? mixer = new Mixer();
-        public List<short> outputArray = new List<short>();
+        // Overall master volume settings of APU and application
+        private float m_volume = 1.0f;
+        private float MasterVolume => m_volume * APUConstants.AMPLITUDE_MAX;
 
-        public int samplesThisFrame = 0;
-        public int offset = 0;
-        public double Period(float frequency) => (Math.PI * 2 * frequency) / APUConstants.SAMPLE_RATE;
-        private static woLib WaveOut = new woLib();
+        // Mixer class for generating and mixing channel audio
+        public Mixer? Mixer = new();
+
+        // Wave Out device to send audio buffers to speakers
+        private static woLib WaveOut = new();
+
+        public Channel[] Channels = [new Square(DutyCycle.k125), new Square(DutyCycle.k125), new Triangle(), new Noise(), new DMC(), new FDS()];
+
+        public EffectsBank? EffectsBank = new();
 
         public APU()
         {
             WaveOut.InitWODevice(APUConstants.SAMPLE_RATE, 1, (uint)APUConstants.BITS_PER_SAMPLE, false);
+            DMCBank.InitDMCBanks();
+            FDSBank.InitFDSBanks();
         }
+
+        #region APU Update functions
+
+        // Update NMI based properties, like effects
+        public void FrameUpdate()
+        {
+            foreach (Channel c in Channels)
+            {
+                c.FrameUpdate();
+            }
+        }
+
+        // Called every tick, generates audio and outputs it to speakers in real time
+        public bool Update(double deltaTime)
+        {
+            int sampleCount = (int)(deltaTime / 1000f * APUConstants.SAMPLE_RATE);
+            if (sampleCount == 0) { return false; }
+
+            short[]? soundBuffer = GenerateSoundBuffer(sampleCount);
+            if (soundBuffer is null) { return false; }
+
+            OutputSoundBuffer(soundBuffer);
+            return true;
+        }
+
+        // Reset the APU
+        public void Reset()
+        {
+            foreach (Channel c in Channels)
+            {
+                c.Reset();
+            }
+            Mixer?.Reset();
+        }
+
         public void SetMasterVolume(float volume)
         {
-            m_masterVolume = Math.Clamp(volume, 0, 1);
+            m_volume = Math.Clamp(volume, 0, 1);
         }
 
-        public void SetChannelVolume(float volume, int channel)
-        {
-            mixer?.SetChannelVolume(volume, channel);
-        }
+        #endregion
 
-        public void SetOscilatorPitch(int pitch, int channel)
-        {
-            mixer?.SetOscilatorPitch(pitch, channel);
-        }
+        #region Sound Buffer functions
 
-        public void SetOscilatorEffect(Effect effect, int channel)
+        // Generate a sound buffer for the desired sample count
+        public short[]? GenerateSoundBuffer(int sampleCount)
         {
-            mixer?.SetOscilatorEffect(effect, channel);
-        }
-
-        public void RemoveOscilatorEffect(EffectStack.EffectSlots slot, int channel)
-        {
-            mixer?.RemoveOscilatorEffect(slot, channel);
-        }
-
-        public void TriggerDMC(int sample)
-        {
-            mixer?.TriggerDMC(sample);
-        }
-
-        public void FrameTick()
-        {
-            mixer?.FrameTick();
-        }
-
-        public bool Update(double deltaTime, bool accumulateOutput = false)
-        {
-            samplesThisFrame = (int)((deltaTime/1000f) * (APUConstants.SAMPLE_RATE));
-
-            if(samplesThisFrame == 0)
+            // generate mixed float buffer
+            float[]? mixBuffer = Mixer?.GenerateMixBuffer(sampleCount, in Channels);
+            if (mixBuffer is null)
             {
-                return false;
+                return null;
             }
 
-            float[]? mixBuffer = mixer?.GenerateMixBuffer(samplesThisFrame);
-            if (mixBuffer is not null)
+            // make final short buffer with mastered volume   
+            short[] outBuffer = new short[sampleCount];
+            for (int i = 0; i < sampleCount; i++)
             {
-                //for each sample, we'll want to multiply it by the master volume
-                //these should be some number between 0 and 100 (abs)
-                short[] outputWave = new short[mixBuffer.Length];
-                for(int i = 0; i < mixBuffer.Length; i++)
-                {
-                    float masteredSample = mixBuffer[i] * m_masterVolume * APUConstants.AMPLITUDE_MAX;
-                    outputWave[i] = Convert.ToInt16(Math.Min(masteredSample, short.MaxValue));
-                }
-                if (accumulateOutput)
-                {
-                    outputArray.AddRange(outputWave);
-                }
-                //output sound to speakers 
-                IntPtr outWave = Marshal.AllocHGlobal(samplesThisFrame * sizeof(short));
-                Marshal.Copy(outputWave, 0, outWave, samplesThisFrame);
-                WaveOut.SendWODevice(outWave, (uint)(samplesThisFrame * sizeof(short)));
-                Marshal.FreeHGlobal(outWave);
-                return true;
+                float masteredSample = mixBuffer[i] * MasterVolume;
+                outBuffer[i] = Convert.ToInt16(Math.Min(masteredSample, short.MaxValue));
             }
-            return false;
+
+            return outBuffer;
         }
-        public void OutputSound()
+
+        // Output a given buffer to the speakers
+        public void OutputSoundBuffer(in short[] soundBuffer)
         {
-            short[] outputWave = outputArray.ToArray();
-            int sampleCount = outputWave.Length;
-            Debug.WriteLine($"final sample count: {sampleCount}");
+            nint outWave = Marshal.AllocHGlobal(soundBuffer.Length * sizeof(short));
+            Marshal.Copy(soundBuffer, 0, outWave, soundBuffer.Length);
+            WaveOut.SendWODevice(outWave, (uint)(soundBuffer.Length * sizeof(short)));
+            Marshal.FreeHGlobal(outWave);
+        }
+
+        // Export given buffer to a WAV file
+        public void ExportBufferToWAV(short[] outBuffer)
+        {
+            int sampleCount = outBuffer.Length;
             byte[] binaryWave = new byte[sampleCount * sizeof(short)];
-            Buffer.BlockCopy(outputWave, 0, binaryWave, 0, sampleCount * sizeof(short));
-            using (FileStream file = new FileStream("test.wav", FileMode.Create, System.IO.FileAccess.Write))
+
+            Buffer.BlockCopy(outBuffer, 0, binaryWave, 0, sampleCount * sizeof(short));
+
+            using (FileStream file = new FileStream("test.wav", FileMode.Create, FileAccess.Write))
             using (MemoryStream memoryStream = new MemoryStream())
             using (BinaryWriter binaryWriter = new BinaryWriter(memoryStream))
             {
@@ -130,41 +148,70 @@ namespace CatfortSound.SoundEngine
                 memoryStream.Close();
 
             }
-            outputArray.Clear();
         }
 
-        public void UpdateVolume(int channel, float volume)
+        #endregion
+
+        #region Channel functions
+
+        public void SetChannelVolume(float volume, int channel)
         {
-            if(mixer is not null)
+            Channels[channel].SetChannelVolume(volume);
+        }
+
+        public void SetOscilatorPitch(int pitch, int channel)
+        {
+            Oscilator? oscilator = Channels[channel] as Oscilator;
+            if (oscilator is not null)
             {
-                mixer.ChannelVolumes[channel] = volume;
+                oscilator.SetPitch(pitch);
             }
         }
 
-        public void ResetChannels()
+        public void SetOscilatorEffect(Effect effect, int channel)
         {
-            outputArray.Clear();
-            if(mixer is not null)
+            Oscilator? oscilator = Channels[channel] as Oscilator;
+            if (oscilator is not null)
             {
-                mixer.ResetChannels();
+                oscilator.Effects.SetEffect(effect);
             }
         }
+
+        public void RemoveOscilatorEffect(EffectStack.EffectSlots slot, int channel)
+        {
+            Oscilator? oscilator = Channels[channel] as Oscilator;
+            if (oscilator is not null)
+            {
+                oscilator.Effects.ClearEffect(slot);
+            }
+        }
+
+        public void TriggerDMC(int sample)
+        {
+            int dmcIndex = sample >> 4;
+            int pitch = sample & 15;
+
+            if ((byte)sample == 0xFF)
+            {
+                return;
+            }
+
+            DMC? dmc = Channels[(int)ChannelIndexes.DPMC] as DMC;
+            dmc?.SetSample(dmcIndex, pitch);
+        }
+
+        #endregion
     }
 
     class APUConstants
     {
-        //public static readonly uint SAMPLE_RATE = 44100;
         public static readonly uint SAMPLE_RATE = 48000;
         public static readonly short BITS_PER_SAMPLE = 16;
         public static readonly float BASE_VOLUME = 0.35f;
         public static readonly float AMPLITUDE_MAX = BASE_VOLUME * short.MaxValue;
 
         public static readonly float CPU_Hz = 1789773f;
-        //each CPU cycle is about 40.5 samples long
-        //public static readonly float CPU_CLOCKS_PER_SAMPLE = 40.58442176870748f;
         public static readonly float CPU_CLOCKS_PER_SAMPLE = 37.2869375f;
-        //APU runs every other CPU cycle, so we get half the clocks
-        //public static readonly float APU_CLOCKS_PER_SAMPLE = 20.29221088435374f;
         public static readonly float APU_CLOCKS_PER_SAMPLE = 18.64346875f;
     }
 }

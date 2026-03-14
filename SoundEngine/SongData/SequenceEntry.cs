@@ -1,5 +1,10 @@
-﻿using FFmpeg.AutoGen;
+﻿using CatfortSound.SoundEngine.Banks;
+using CatfortSound.SoundEngine.Channels;
+using CatfortSound.SoundEngine.DataTables;
+using CatfortSound.SoundEngine.Sequence;
+using FFmpeg.AutoGen;
 using Melanchall.DryWetMidi.Core;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -11,8 +16,15 @@ using System.Threading.Tasks;
 using System.Transactions;
 using System.Windows.Controls;
 
-namespace CatfortSound.SoundEngine
+namespace CatfortSound.SoundEngine.SongData
 {
+    public enum GetModes
+    {
+        playback = 0,
+        save = 1,
+        export = 2
+    }
+
     [Serializable()]
     public abstract class SequenceEntry : INotifyPropertyChanged
     {
@@ -45,16 +57,16 @@ namespace CatfortSound.SoundEngine
             if(PropertyChanged != null) { PropertyChanged(this, new PropertyChangedEventArgs(propertyName)); }
         }
 
-        public virtual byte[] GetEntryBytes(bool save = false)
+        public virtual byte[] GetEntryBytes(GetModes getMode = GetModes.playback)
         {
             List<byte> bytes = new();
-            BuildByteList(bytes, save);
+            BuildByteList(bytes, getMode);
             return bytes.ToArray();
         }
 
-        public virtual void BuildByteList(in List<byte> bytes, bool save = false)
+        public virtual void BuildByteList(in List<byte> bytes, GetModes getMode = GetModes.playback)
         {
-            if (Length != Lengths._ || save)
+            if (Length != Lengths._ || getMode == GetModes.save)
             {
                 bytes.Add((byte)Length);
             }
@@ -87,9 +99,10 @@ namespace CatfortSound.SoundEngine
             }
         }
 
-        public override void BuildByteList(in List<byte> bytes, bool save = false)
+        public override void BuildByteList(in List<byte> bytes, GetModes getMode = GetModes.playback)
         {
-            base.BuildByteList(bytes, save);
+            base.BuildByteList(bytes, getMode);
+            bool save = getMode == GetModes.save;
             if (VolEffect >= 0 || save)
             {
                 if(!save)
@@ -102,15 +115,17 @@ namespace CatfortSound.SoundEngine
 
     public class OscEntry : GeneratorChannelEntry
     {
-        public OscEntry(byte[] data)
+        public OscEntry(byte[] data):base(data)
         {
             ModEffect = (sbyte)data[2];
             ArpEffect = (sbyte)data[3];
             //on reverse loading notes: note = byte%12, octave = floor(byte/12)+1 
-            byte cmpNote = data[4];
-            Note = (Notes)(cmpNote % 12);
-            Octave = (int)(cmpNote / 12.0) + 1;
+            byte cmpNote = GetNote(data);
+            Note = cmpNote == NoteConstants.Rest ? Notes.rest : (Notes)(cmpNote % 12);
+            Octave = cmpNote == NoteConstants.Rest ? 4 : (int)(cmpNote / 12.0) + 1;
         }
+
+        protected virtual byte GetNote(byte[] data) => data[4];
 
         public OscEntry() : base()
         {
@@ -166,9 +181,11 @@ namespace CatfortSound.SoundEngine
             }
         }
 
-        public override void BuildByteList(in List<byte> bytes, bool save = false)
+        public override void BuildByteList(in List<byte> bytes, GetModes getMode = GetModes.playback)
         {
-            base.BuildByteList(bytes, save);
+            base.BuildByteList(bytes, getMode);
+            bool save = getMode == GetModes.save;
+
             if (ModEffect >= 0 || save)
             {
                 if (!save)
@@ -182,7 +199,7 @@ namespace CatfortSound.SoundEngine
                 bytes.Add((byte)ArpEffect);
             }
 
-            byte outNote = Note == Notes.rest ? (byte)0x5e : (byte)Math.Clamp((int)Note + (0xC * (Octave-1)), 0, 0x5d); 
+            byte outNote = Note == Notes.rest ? (byte)NoteConstants.Rest : (byte)Math.Clamp((int)Note + 0xC * (Octave-1), 0, 0x5d); 
             bytes.Add(outNote);
         }
     }
@@ -191,12 +208,14 @@ namespace CatfortSound.SoundEngine
     {
         public PulseEntry(byte[] data):base(data)
         {
-            DutyEffect = (sbyte)data[5];
+            DutyEffect = (sbyte)data[4];
         }
         public PulseEntry() : base()
         {
             DutyEffect = -1;
         }
+
+        protected override byte GetNote(byte[] data) => data[5];
 
         protected int _dutyEffect;
         public int DutyEffect
@@ -209,14 +228,22 @@ namespace CatfortSound.SoundEngine
             }
         }
 
-        public override void BuildByteList(in List<byte> bytes, bool save = false)
+        public override void BuildByteList(in List<byte> bytes, GetModes getMode = GetModes.playback)
         {
-            base.BuildByteList(bytes, save);
+            base.BuildByteList(bytes, getMode);
+            bool save = getMode == GetModes.save;
+
+            //since we want the note to be the last thing, squeeze this in there
             if (DutyEffect >= 0 || save)
             {
                 if (!save)
-                    bytes.Add((byte)Instructions.DutyEffect);
-                bytes.Add((byte)DutyEffect);
+                    bytes.Insert(bytes.Count-1, (byte)Instructions.DutyEffect);
+
+                //on export, we need the extra info
+                if(getMode == GetModes.export)
+                    bytes.Insert(bytes.Count-1, (byte)((DutyEffect<<6)|0x30));
+                else
+                    bytes.Insert(bytes.Count - 1, (byte)DutyEffect);
             }
         }
     }
@@ -249,40 +276,39 @@ namespace CatfortSound.SoundEngine
             }
         }
 
-        public override void BuildByteList(in List<byte> bytes, bool save = false)
+        public override void BuildByteList(in List<byte> bytes, GetModes getMode = GetModes.playback)
         {
-            base.BuildByteList(bytes, save);
+            base.BuildByteList(bytes, getMode);
             bytes.Add(Pitch == -1 ? (byte)17 : (byte)Pitch);
         }
     }
 
     public class DMCEntry : SequenceEntry
     {
-
         public DMCEntry(byte[] data) : base(data)
         {
             byte cmpDMC = data[1];
 
-            if((DMC.Samples)cmpDMC == DMC.Samples.kNone)
+            if((DMCSamples)cmpDMC == DMCSamples.kNone)
             {
-                Sample = DMC.Samples.kNone;
+                Sample = DMCSamples.kNone;
                 Pitch = 0;
             }
             else
             {
                 Pitch = cmpDMC & 0x0F;
-                Sample = (DMC.Samples)(cmpDMC >> 4);
+                Sample = (DMCSamples)(cmpDMC >> 4);
             }
         }
 
         public DMCEntry() : base()
         {
-            Sample = DMC.Samples.kNone;
+            Sample = DMCSamples.kNone;
             Pitch = 0;
         }
 
-        protected DMC.Samples _sample;
-        public DMC.Samples Sample
+        protected DMCSamples _sample;
+        public DMCSamples Sample
         {
             get { return _sample; }
             set
@@ -303,16 +329,16 @@ namespace CatfortSound.SoundEngine
             }
         }
 
-        public override void BuildByteList(in List<byte> bytes, bool save = false)
+        public override void BuildByteList(in List<byte> bytes, GetModes getMode = GetModes.playback)
         {
-            base.BuildByteList(bytes, save);
-            if (Sample == DMC.Samples.kNone)
+            base.BuildByteList(bytes, getMode);
+            if (Sample == DMCSamples.kNone)
             {
                 bytes.Add((byte)Sample);
             }
             else
             {
-                bytes.Add((byte)(((byte)Sample << 4) | Pitch));
+                bytes.Add((byte)((byte)Sample << 4 | Pitch));
             }
         }
     }

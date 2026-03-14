@@ -1,0 +1,25 @@
+﻿<Window x:Class="CatfortSound.Utilities.About"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CatfortSound.Utilities"
+        mc:Ignorable="d"
+        Title="About" Height="178" Width="352"
+        WindowStartupLocation="CenterOwner">
+    <Grid>
+        <StackPanel Orientation="Horizontal">
+            <Image>
+                <Image.Source>
+                    <BitmapImage DecodePixelWidth="300" UriSource="/Icons/cf_logo.png"/>
+                </Image.Source>
+            </Image>
+            <StackPanel>
+                <Label x:Name="CatfortLabel" Content="Catfort Sound" VerticalAlignment="Center" FontFamily="MachineScript" FontSize="22"/>
+                <Label Content="Copyright 2025-2026"/>
+                <Label Content="Developed by John Welter"/>
+            </StackPanel>
+        </StackPanel>
+
+    </Grid>
+</Window>

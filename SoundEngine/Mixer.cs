@@ -1,4 +1,5 @@
-﻿using MathNet.Numerics.Distributions;
+﻿using CatfortSound.SoundEngine.DataTables;
+using MathNet.Numerics.Distributions;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -9,125 +10,85 @@ using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
+using Channel = CatfortSound.SoundEngine.Channels.Channel;
+using CatfortSound.SoundEngine.Channels;
+using CatfortSound.SoundEngine.Effects;
+using Avalonia.Metadata;
+
 namespace CatfortSound.SoundEngine
 {
-    class Mixer
+    public class Mixer
     {
-        public Channel[] Channels = [new Square(DutyCycle.k25), new Square(DutyCycle.k50), new Triangle(), new Noise(), new DMC(), new FDS()];
-        public float[] ChannelVolumes = [1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f];
+        // mixer volumes, independent of channels
+        public float[] ChannelMixerVolumes = [1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f];
 
+        // dirty filter values
+        private const float beta = 0.99f;
+        private float gain => (1.0f + beta)/2.0f;
 
-        float beta => 0.99f;
-        float gain => (1.0f + beta)/2.0f;
-
-        float alpha => 0.3f;
-
-        float prev_outputLo = 0;
         float prev_output = 0;
         float prev_input = 0;
 
+        // extra details for a dirty low pass, but probably not needed 
 
-        public void SetChannelVolume(float volume, int channel)
-        {
-            Channels[channel].SetChannelVolume(volume);
-        }
+        /*
+        float alpha => 0.3f;
+        float prev_outputLo = 0;
+        */
 
-        public void SetOscilatorPitch(int pitch, int channel)
+        // pre-allocated samples list
+        private float[] samples = new float[5];
+
+        public float GetSample(int index) => samples[index]; 
+
+        public float[] GenerateMixBuffer(int sampleCount, in Channel[] channels)
         {
-            Oscilator? oscilator = Channels[channel] as Oscilator;
-            if(oscilator is not null)
+            float[] mixBuffer = new float[sampleCount];
+
+            for (int i = 0; i < sampleCount; i++)
             {
-                oscilator.SetPitch(pitch);
-            }
-        }
+                //generate samples
+                for(int j = 0; j < 5; j++)
+                {
+                    samples[j] = channels[j].GenerateSample() * ChannelMixerVolumes[j];
+                }
 
-        public void SetOscilatorEffect(Effect effect, int channel)
-        {
-            Oscilator? oscilator = Channels[channel] as Oscilator;
-            if (oscilator is not null)
-            {
-                oscilator.Effects.SetEffect(effect);
-            }
-        }
+                //mix samples
+                float pulseOut = MakePusleOut(samples[0], samples[1]);
+                float tndOut = MakeTNDOut(samples[2], samples[3], samples[4]);
 
-        public void RemoveOscilatorEffect(EffectStack.EffectSlots slot, int channel)
-        {
-            Oscilator? oscilator = Channels[channel] as Oscilator;
-            if (oscilator is not null)
-            {
-                oscilator.Effects.ClearEffect(slot);
-            }
-        }
 
-        //called every 1/60th of a second
-        public void FrameTick()
-        {
-            foreach(Channel c in Channels)
-            {
-                c.FrameTick();
-            }
-        }
+                //filter mix
+                float output = DirtyFilter((pulseOut + tndOut), ref prev_input, ref prev_output);
 
-        public float[] GenerateMixBuffer(int samplesThisFrame)
-        {
-
-            float[] mixBuffer = new float[samplesThisFrame];
-
-            for (int i = 0; i < samplesThisFrame; i++)
-            {
-                //we'll want to recenter these channel by channel
-                float square1 = Channels[(int)ChannelIndexes.SQUARE_1].GenerateSample() * ChannelVolumes[(int)ChannelIndexes.SQUARE_1];
-                float square2 = Channels[(int)ChannelIndexes.SQUARE_2].GenerateSample() * ChannelVolumes[(int)ChannelIndexes.SQUARE_2];
-                float triangle = Channels[(int)ChannelIndexes.TRIANGLE].GenerateSample() * ChannelVolumes[(int)ChannelIndexes.TRIANGLE];
-                float noise = Channels[(int)ChannelIndexes.NOISE].GenerateSample() * ChannelVolumes[(int)ChannelIndexes.NOISE];
-                float dmc = Channels[(int)ChannelIndexes.DMC].GenerateSample() * ChannelVolumes[(int)ChannelIndexes.DMC];
-                //float fds = Channels[FDS].GenerateSample() * ChannelVolumes[FDS];
-
-                float pulseOut = MakePusleOut(square1, square2);
-                float tndOut = MakeTNDOut(triangle, noise, dmc);
-
-                //value sould be some number between 0 and 1 - so we can recenter it
-
-                float mix = pulseOut + tndOut;
-
-                float output = gain * (mix - prev_input) + beta * prev_output;
-
-                prev_input = mix;
-                prev_output = output;
-
-                float outLo = alpha * output + (1 - alpha) * prev_outputLo;
-                prev_outputLo = outLo;
-
+                //output to buffer
                 mixBuffer[i] = output;
-                //mixBuffer[i] = mix;
+                //mixBuffer[i] = (pulseOut + tndOut);
             }
 
             return mixBuffer;
         }
 
-
-
-        internal void TriggerDMC(int sample)
+        private float DirtyFilter(float input, ref float previousInput, ref float previousOutput)
         {
-            int dmcIndex = sample >> 4;
-            int pitch = sample & 15;
+            float output = gain * (input - previousInput) + beta * previousOutput;
+            previousInput = input;
+            previousOutput = output;
 
-            if((byte)sample == 0xFF)
-            {
-                //dmcIndex = -1;
-                return;
-            }
+            //extra lo pass? probably don't need
+            //float outLo = alpha * output + (1 - alpha) * prev_outputLo;
+            //prev_outputLo = outLo;
 
-            DMC? dmc = Channels[(int)ChannelIndexes.DMC] as DMC;
-            dmc?.SetSample(dmcIndex, pitch);
+            return output;
         }
 
-        public void ResetChannels()
+        public void SetChannelMixerVolume(int channel, float newVolume)
         {
-            foreach(Channel c in Channels)
-            {
-                c.Reset();
-            }
+            ChannelMixerVolumes[channel] = newVolume;
+        }
+
+        public void Reset()
+        {
             prev_input = 0;
             prev_output = 0;
         }
@@ -140,7 +101,7 @@ namespace CatfortSound.SoundEngine
                 return 0;
             }
 
-            return 95.88f / ((8128f / pAdd) + 100f);
+            return 95.88f / (8128f / pAdd + 100f);
         }
 
         public float MakeTNDOut(float t, float n, float d)

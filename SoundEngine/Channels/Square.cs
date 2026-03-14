@@ -1,4 +1,5 @@
-﻿using Ownaudio.Sources.Extensions;
+﻿using CatfortSound.SoundEngine.Effects;
+using Ownaudio.Sources.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Markup;
 
-namespace CatfortSound.SoundEngine
+namespace CatfortSound.SoundEngine.Channels
 {
     public enum DutyCycle
     {
@@ -34,7 +35,7 @@ namespace CatfortSound.SoundEngine
             {1, 1, 1, 1, 1, 1, 0, 0 }
         };
 
-        public DutyCycle cycle = SoundEngine.DutyCycle.k50;
+        public DutyCycle cycle = DutyCycle.k50;
         public int GetDutyCycle() => Effects.HasEffect(EffectStack.EffectSlots.kDuty)? Effects.GetEffectValue(EffectStack.EffectSlots.kDuty) : (int)cycle;
        
         public Square(DutyCycle cycle)
