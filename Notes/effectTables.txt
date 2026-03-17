@@ -1,0 +1,22 @@
+﻿
+we also want the ability to export the effect tables
+
+which means exporting:
+
+- labeled byte lists
+- list of labels
+- we don't NECESSARILY need to export label indexes, since we don't need the music to be human readable, just good for the compiler
+
+- export to designated files in sound engine folder
+- would be nice to also just export the precompiled engine? bute we're not writing a compiler... today
+
+- list of label/list combos
+- even better - something similar to that wave table thing from LMMS, with a draw function inside an image, OR hand written
+
+
+can we somehow do data binding between a generated bitmap and an array? how would that work?
+volume, for example:
+	- create an image, 16 pixels tall and 256 pixels wide (only display a6 to start)
+	- there's a spinner or somethign that can adjust the image width, adding or removing pixels (min 1, up to 256)
+	- each column of the image corresponds to a value in the effect -click on image, change height of pixel, change value 
+	- maybe the image itself has a backend to the data binding that we can just adjust

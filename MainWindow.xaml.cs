@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Configuration;
 using System.Diagnostics;
 using System.Media;
@@ -20,6 +21,8 @@ using System.Windows.Shapes;
 using System.Xml;
 using CatfortSound.SoundEngine;
 using CatfortSound.SoundEngine.Banks;
+using CatfortSound.SoundEngine.DataTables;
+using CatfortSound.SoundEngine.Effects;
 using CatfortSound.SoundEngine.Sequence;
 using CatfortSound.SoundEngine.SongData;
 using CatfortSound.Utilities;
@@ -60,9 +63,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     bool mouseHeld = false;
 
     public List<Slider> volumeSliders = new List<Slider>();
-    public object[] ViewModels = new object[5]; 
+    public object[] TrackViewModels = new object[5]; 
     public DataGrid[] TrackerLists = new DataGrid[5];
     public DataGrid[] LoopLists = new DataGrid[5];
+
+    public EffectViewModel[] EffectViewModels = new EffectViewModel[4]; 
+    public ListView[] EffectLists = new ListView[4];
 
     private bool audioActive = false;
     public bool AudioActive
@@ -118,11 +124,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         volumeSliders.Add(noi_vol);
         volumeSliders.Add(dmc_vol);
 
-        ViewModels[0] = new EntryViewModel<PulseEntry>(Sequencer.SongChart.Channels[0]);
-        ViewModels[1] = new EntryViewModel<PulseEntry>(Sequencer.SongChart.Channels[1]);
-        ViewModels[2] = new EntryViewModel<OscEntry>(Sequencer.SongChart.Channels[2]);
-        ViewModels[3] = new EntryViewModel<NoiseEntry>(Sequencer.SongChart.Channels[3]);
-        ViewModels[4] = new EntryViewModel<DMCEntry>(Sequencer.SongChart.Channels[4]);
+        TrackViewModels[0] = new EntryViewModel<PulseEntry>(Sequencer.SongChart.Channels[0]);
+        TrackViewModels[1] = new EntryViewModel<PulseEntry>(Sequencer.SongChart.Channels[1]);
+        TrackViewModels[2] = new EntryViewModel<OscEntry>(Sequencer.SongChart.Channels[2]);
+        TrackViewModels[3] = new EntryViewModel<NoiseEntry>(Sequencer.SongChart.Channels[3]);
+        TrackViewModels[4] = new EntryViewModel<DMCEntry>(Sequencer.SongChart.Channels[4]);
+
+        EffectViewModels[0] = new EffectViewModel(AudioProcessor.EffectsBank.VolumeEffects);
+        EffectViewModels[1] = new EffectViewModel(AudioProcessor.EffectsBank.ModularEffects);
+        EffectViewModels[2] = new EffectViewModel(AudioProcessor.EffectsBank.ArpeggioEffects);
+        EffectViewModels[3] = new EffectViewModel(AudioProcessor.EffectsBank.DutyCycleEffects);
+
+        EffectLists[0] = VolEffectList;
+        EffectLists[1] = ModEffectList;
+        EffectLists[2] = ArpEffectList;
+        EffectLists[3] = DutyEffectList;
 
         LoopLists[0] = p1Subloops;
         LoopLists[1] = p2Subloops;
@@ -136,10 +152,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         TrackerLists[3] = nGrid;
         TrackerLists[4] = dmcGrid;
 
+        //EffectLists[0] = 
+
         HookupMVVM();
 
         tempo.DataContext = Sequencer.SongChart;
-
+        UI_EffectEditor.EffectObject = EffectViewModels[0].EffectList[0];
     }
 
     protected void RenderUpdate(object? sender, EventArgs? e)
@@ -194,13 +212,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     void HookupMVVM()
     {
-        for(int i = 0; i < ViewModels.Length; i++) 
+        for(int i = 0; i < TrackViewModels.Length; i++) 
         {
-            MethodInfo? BindToGrid = ViewModels[i].GetType().GetMethod("BindToDataGrid");
-            BindToGrid?.Invoke(ViewModels[i], new object[] { TrackerLists[i] });
+            MethodInfo? BindToGrid = TrackViewModels[i].GetType().GetMethod("BindToDataGrid");
+            BindToGrid?.Invoke(TrackViewModels[i], new object[] { TrackerLists[i] });
 
             LoopLists[i].ItemsSource = Sequencer.SongChart.Subloops[i];
         }
+
+        for(int i = 0; i < EffectViewModels.Length; i++)
+        {
+            EffectLists[i].ItemsSource = EffectViewModels[i].EffectList;
+        }
+        
     }
 
     private void play_button_Click(object sender, RoutedEventArgs e)
@@ -209,7 +233,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         AudioProcessor.Reset();
         Sequencer.Reset();
         Sequencer.SongChart.LockTempo();
-        
+
         m_deltaTime = 0;
         m_frameTimer = 0;
         m_timeLastFrame = 0;
@@ -226,6 +250,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Regex regex = new Regex("[^0-9]+");
         e.Handled = regex.IsMatch(e.Text);
     }
+
 
     private void Toolbar_New(object sender, RoutedEventArgs e)
     {
@@ -404,6 +429,44 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 entry.Octave = (int)(cmpNote / 12.0) + 1;
             }  
         }
+    }
+
+    private void UI_EffectEditor_Loaded(object sender, RoutedEventArgs e)
+    {
+    }
+
+    private void AddEffect_Click(object sender, RoutedEventArgs e)
+    {
+        string newName = EffectTabs.SelectedItem.ToString() ?? "NewEffect";
+        EffectViewModels[EffectTabs.SelectedIndex].AddEffect(new EffectData(newName, (EffectTabs.SelectedIndex == 1 && EffectTabs.SelectedIndex == 2))); 
+    }
+
+    private void RemoveEffect_Click(object sender, RoutedEventArgs e)
+    {
+        int idx = EffectLists[EffectTabs.SelectedIndex].SelectedIndex;
+        EffectViewModels[EffectTabs.SelectedIndex].RemoveEffect(idx);
+    }
+
+    private void EffectList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if(sender is ListView view)
+        {
+            UI_EffectEditor.EffectObject = ((ObservableCollection<EffectData>)view.ItemsSource)[view.SelectedIndex];
+        }
+    }
+
+    private void Toolbar_OpenEffects(object sender, RoutedEventArgs e)
+    {
+
+    }
+    private void Toolbar_SaveEffects(object sender, RoutedEventArgs e)
+    {
+
+    }
+
+    private void Toolbar_ExportEffects(object sender, RoutedEventArgs e)
+    {
+
     }
 
     //private void p1Grid_MouseMove(object sender, MouseEventArgs e)

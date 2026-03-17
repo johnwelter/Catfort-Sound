@@ -78,7 +78,7 @@ namespace CatfortSound.SoundEngine.Effects
     {
         protected int m_ticks = -1;
         protected byte[]? m_effectBytes;
-        protected int GetEffectValue(int idx) => m_effectBytes?[idx] ?? 0;
+        protected int GetEffectValue(int idx) => (sbyte)(m_effectBytes?[idx] ?? (byte)0);
         protected int effectLength => m_effectBytes?.Length ?? 0;
 
         public int CurrentValue = 0;
@@ -130,7 +130,13 @@ namespace CatfortSound.SoundEngine.Effects
         public override void TickEffect()
         {
             base.TickEffect();
+            int val = GetEffectValue(m_ticks);
+            if ((byte)val == 0xFF)
+            {
+                IncTicks(-1);
+            }
             CurrentValue = GetEffectValue(m_ticks);
+            Debug.WriteLine(CurrentValue);
         }
     }
 
@@ -147,11 +153,11 @@ namespace CatfortSound.SoundEngine.Effects
         {
             base.TickEffect();
             int val = GetEffectValue(m_ticks);
-            if (val == 0xFF)
+            if ((byte)val == 0x80)
             {
                 m_ticks = 0;
             }
-            CurrentValue = val;
+            CurrentValue = GetEffectValue(m_ticks);
         }
     }
 
@@ -160,7 +166,7 @@ namespace CatfortSound.SoundEngine.Effects
         public const int LOOP_LAST = 0x80;
         public const int LOOP_ALL = 0x81;
         public const int LOOP_PART = 0x82;
-        public const int START_DELAY = 0x83;
+        public const int HOLD_CURRENT = 0x83;
 
         private int delayTimer = 0;
 
@@ -187,7 +193,7 @@ namespace CatfortSound.SoundEngine.Effects
             {
                 int val = GetEffectValue(m_ticks);
 
-                switch (val)
+                switch ((byte)val)
                 {
                     case LOOP_LAST:
                         IncTicks(-1);
@@ -199,7 +205,7 @@ namespace CatfortSound.SoundEngine.Effects
                         IncTicks();
                         m_ticks -= GetEffectValue(m_ticks);
                         break;
-                    case START_DELAY:
+                    case HOLD_CURRENT:
                         IncTicks();
                         delayTimer = GetEffectValue(m_ticks);
                         processedTick = true;
@@ -232,6 +238,11 @@ namespace CatfortSound.SoundEngine.Effects
         public override void TickEffect()
         {
             base.TickEffect();
+            int val = GetEffectValue(m_ticks);
+            if ((byte)val == 0xFF)
+            {
+                IncTicks(-1);
+            }
             CurrentValue = GetEffectValue(m_ticks);
         }
     }

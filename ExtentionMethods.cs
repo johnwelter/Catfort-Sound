@@ -13,7 +13,9 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media.Media3D;
+using System.Windows.Threading;
 
 namespace CatfortSound
 {
@@ -27,6 +29,11 @@ namespace CatfortSound
         {
             var json = JsonSerializer.Serialize(a);
             return JsonSerializer.Deserialize<T>(json);
+        }
+        private static readonly Action EmptyDelegate = delegate { };
+        public static void Refresh(this UIElement uiElement)
+        {
+            uiElement.Dispatcher.Invoke(DispatcherPriority.Render, EmptyDelegate);
         }
     }
 

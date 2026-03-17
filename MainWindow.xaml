@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CatfortSound"
+        xmlns:views="clr-namespace:CatfortSound.ViewModels"
         mc:Ignorable="d"
         Title="Catfort Sound
         " Height="832" Width="909"
@@ -26,6 +27,9 @@
                 <MenuItem Header="Save" Click="Toolbar_Save"/>
                 <MenuItem Header="Save As..." Click="Toolbar_SaveAs"/>
                 <MenuItem Header="Export..." Click="Toolbar_Export"/>
+                <MenuItem Header="Open Effects..." Click="Toolbar_OpenEffects"/>
+                <MenuItem Header="Save Effects..." Click="Toolbar_OpenEffects"/>
+                <MenuItem Header="Export Effects..." Click="Toolbar_ExportEffects"/>
                 <Separator/>
                 <!--MenuItem Header="Settings..." Click="Toolbar_Settings"/-->
             </MenuItem>
@@ -33,9 +37,10 @@
                 <MenuItem Header="About" Click="Toolbar_About"/>
             </MenuItem>
         </Menu>
+        <!-- Main Window -->
         <StackPanel x:Name="UI_MainWindow"  Orientation="Horizontal" Margin="0,21,0,0">
+            <!-- Playback and Volume Controls -->
             <StackPanel Orientation="Vertical">
-
                 <StackPanel x:Name="UI_VolumeControls" Orientation="Horizontal">
                     <StackPanel.Resources>
                         <Style TargetType="{x:Type Slider}">
@@ -92,6 +97,7 @@
                     </StackPanel>
                 </StackPanel>
             </StackPanel>
+            <!-- Tracker Lists -->
             <DockPanel x:Name="UI_TrackerDock">
                 <TabControl x:Name="tabControl">
                     <TabItem Header="Square1">
@@ -184,14 +190,52 @@
                     </TabItem>
                 </TabControl>
             </DockPanel>
+            <!-- Effect Editor -->
             <StackPanel x:Name="UI_EffectEditorStack" Width="415">
-                <Grid x:Name="UI_EffectCurveView" Height="251">
-                    <Canvas x:Name="UI_CurveViewCanvas" Margin="30,20,30,20" Background="#FF5A4545"/>
-                </Grid>
-                <StackPanel Orientation="Horizontal" Height="155" HorizontalAlignment="Center">
-                    <Slider x:Name="UI_AttackSlider" Orientation="Vertical" Margin="40,0,40,0"/>
-                    <Slider x:Name="UI_SustainSlider" Orientation="Vertical" Margin="40,0,40,0"/>
-                    <Slider x:Name="UI_DecaySlider"  Orientation="Vertical" Margin="40,0,40,0"/>
+                <views:EffectEditor x:Name="UI_EffectEditor" Height="272" Loaded="UI_EffectEditor_Loaded"/>
+                <DockPanel>
+                    <TabControl x:Name="EffectTabs">
+                        <TabItem Header="Vol">
+                            <ListView x:Name="VolEffectList" Height="347" Margin="0,10,0,0" SelectionChanged="EffectList_SelectionChanged">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn DisplayMemberBinding="{Binding Path=Name}"/>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+                        </TabItem>
+                        <TabItem Header="Mod">
+                            <ListView x:Name="ModEffectList" Height="347" Margin="0,10,0,0" SelectionChanged="EffectList_SelectionChanged">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn DisplayMemberBinding="{Binding Path=Name}"/>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+                        </TabItem>
+                        <TabItem Header="Arp">
+                            <ListView x:Name="ArpEffectList" Height="347" Margin="0,10,0,0" SelectionChanged="EffectList_SelectionChanged">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn DisplayMemberBinding="{Binding Path=Name}"/>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+                        </TabItem>
+                        <TabItem Header="Duty">
+                            <ListView x:Name="DutyEffectList" Height="347" Margin="0,10,0,0" SelectionChanged="EffectList_SelectionChanged">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn DisplayMemberBinding="{Binding Path=Name}"/>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+                        </TabItem>
+                    </TabControl>
+                </DockPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button x:Name="AddEffect" Content="Add" Click="AddEffect_Click" Height="29" Width="160" Margin="0,15,20,0"/>
+                    <Button x:Name="RemoveEffect" Content="Remove" Click="RemoveEffect_Click" Height="29" Width="160" Margin="20,15,0,0"/>
                 </StackPanel>
             </StackPanel>
         </StackPanel>
