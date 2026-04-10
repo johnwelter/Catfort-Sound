@@ -332,14 +332,7 @@ namespace CatfortSound.SoundEngine.SongData
         public override void BuildByteList(in List<byte> bytes, GetModes getMode = GetModes.playback)
         {
             base.BuildByteList(bytes, getMode);
-            if (Sample == DMCSamples.kNone)
-            {
-                bytes.Add((byte)Sample);
-            }
-            else
-            {
-                bytes.Add((byte)((byte)Sample << 4 | Pitch));
-            }
+            bytes.Add((byte)((byte)Sample << 4 | Pitch));
         }
     }
 }

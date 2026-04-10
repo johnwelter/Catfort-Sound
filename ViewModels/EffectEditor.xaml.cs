@@ -33,11 +33,11 @@ namespace CatfortSound.ViewModels
     public partial class EffectEditor : UserControl, INotifyPropertyChanged
     {
 
-        public static readonly DependencyProperty EffectObjectProperty = DependencyProperty.Register("EffectObject", typeof(EffectData),  typeof(EffectEditor), new PropertyMetadata(null, OnDataChangedCallback));
+        public static readonly DependencyProperty EffectObjectProperty = DependencyProperty.Register("EffectObject", typeof(EffectModelData),  typeof(EffectEditor), new PropertyMetadata(null, OnDataChangedCallback));
 
-        public EffectData EffectObject
+        public EffectModelData EffectObject
         {
-            get { return (EffectData)GetValue(EffectObjectProperty); }
+            get { return (EffectModelData)GetValue(EffectObjectProperty); }
             set { SetValue(EffectObjectProperty, value); }
         }
         
@@ -60,7 +60,7 @@ namespace CatfortSound.ViewModels
 
         protected virtual void OnDataChanged()
         {
-            OnPropertyChanged(nameof(EffectData));
+            OnPropertyChanged(nameof(EffectModelData));
         }
         private static void OnDataChangedCallback(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {

@@ -1,9 +1,11 @@
-﻿using CatfortSound.SoundEngine.DataTables;
+﻿using CatfortSound.SoundEngine;
+using CatfortSound.SoundEngine.DataTables;
 using CatfortSound.SoundEngine.Sequence;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.MusicTheory;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -45,10 +47,6 @@ namespace CatfortSound.Utilities
             header += MakeByte(streamCount);
             channelStrings.Clear();
         }
-        public void AddByteRows(byte[] bytes, int length, ChannelIndexes channel)
-        {
-            channelStrings[channel] += MakeByteRows(bytes, length);
-        }
 
         public void AddEndLoop(ChannelIndexes channel)
         {
@@ -56,20 +54,42 @@ namespace CatfortSound.Utilities
             channelStrings[channel] += MakeWord(GetChannelLabel(channel));
         }
 
-        public string MakeByteRows(byte[] bytes, int length)
+        public string MakeByteRows(byte[] bytes, int length, ref int runningCount)
         {
-            string row = "    .byte";
-            int count = 0;
-            foreach (byte b in bytes)
+            string row = "";
+            if(runningCount == 0)
             {
-                row += $" ${b.ToString("X2")}";
-                count++;
-                if(count % length == 0 && count != bytes.Length)
+                row += "    .byte";
+            }
+            else 
+            {
+                row += ",";
+            }
+
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                row += $" ${bytes[i].ToString("X2")}";
+                runningCount = (runningCount + 1) % length;
+                if(runningCount == 0)
                 {
                     row += "\n";
-                    row += "    .byte";
                 }
-                else if(count != bytes.Length)
+
+                if(i != bytes.Length - 1)
+                {
+                    row += runningCount == 0 ? "    .byte" : ",";
+                }
+            }
+            return row;
+        }
+
+        public string MakeBytes(byte[] byteData)
+        {
+            string row = $"    .byte ";
+            for(int i = 0; i < byteData.Length; i++)
+            {
+                row += $" ${byteData[i].ToString("X2")}";
+                if(i != byteData.Length-1)
                 {
                     row += ",";
                 }
@@ -92,13 +112,13 @@ namespace CatfortSound.Utilities
         {
             return $"    .word {word}\n";
         }
-        public void AddChannel(HeaderInfo headerInfo, byte[] data)
+        public void AddChannel(HeaderInfo headerInfo, List<byte[]> data, ObservableCollection<Subloop> loopData)
         {
             header += "\n";
             header += MakeByte(headerInfo.stream.ToString());
             header += MakeByte(headerInfo.status);
 
-            if(headerInfo.status == 0)
+            if (headerInfo.status == 0)
             {
                 return;
             }
@@ -112,7 +132,55 @@ namespace CatfortSound.Utilities
 
             channelStrings.Add(headerInfo.channel, $"{channelLabel}:\n");
 
-            AddByteRows(data, maxLength, headerInfo.channel);
+            //TODO: this is gross and I hate it, but it works fine. clean it up
+
+            int loopIndex = loopData.Count > 0 ? 0 : -1;
+            bool buildingLoop = false;
+            string musicData = "";
+            int runningCount = 0;
+            for (int i = 0; i < data.Count; i++)
+            {
+                if(loopIndex >= 0)
+                {
+                    if(!buildingLoop && i == loopData[loopIndex].loopStartIndex)
+                    {
+                        //start subloop
+                        runningCount = 0;
+                        if (musicData.Length > 0 && musicData[musicData.Length-1] != '\n')
+                        {
+                            musicData += "\n";
+                        }
+                        musicData += MakeBytes(new byte[] { (byte)Instructions.SetLoop1_Counter, (byte)loopData[loopIndex].loopCount });
+                        musicData += $"{channelLabel}_sublp_{loopIndex + 1}:\n";
+                        buildingLoop = true;
+                    }
+                }
+
+                musicData += MakeByteRows(data[i], maxLength, ref runningCount);
+
+                if (buildingLoop && i == loopData[loopIndex].loopEndIndex)
+                {
+                    //end subloop
+                    runningCount = 0;
+                    musicData += "\n";
+                    musicData += MakeByte((byte)Instructions.Loop1);
+                    musicData += MakeWord($"{channelLabel}_sublp_{loopIndex + 1}");
+                    buildingLoop = false;
+                    loopIndex++;
+                    if(loopIndex == loopData.Count)
+                    {
+                        //if we're out of loops, stop checking
+                        loopIndex = -1;
+                    }
+                }
+                else if(i == data.Count-1)
+                {
+                    musicData += "\n";
+                }
+
+
+            }
+            channelStrings[headerInfo.channel] += musicData;
             AddEndLoop(headerInfo.channel);
             
         }

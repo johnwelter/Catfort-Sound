@@ -105,10 +105,10 @@ namespace CatfortSound.SoundEngine.SongData
 
             foreach (ChannelIndexes channel in Enum.GetValues(typeof(ChannelIndexes)))
             {
-                byte[] channelData = GetChannelBytes(Channels[(int)channel], GetModes.export);
+                List<byte[]> channelData = GetExportBytes(Channels[(int)channel]);
                 HeaderInfo headerInfo = new HeaderInfo();
                 headerInfo.stream = (Streams)channel;
-                headerInfo.status = channelData.Length > 0 ? (byte)1 : (byte)0;
+                headerInfo.status = channelData.Count > 0 ? (byte)1 : (byte)0;
                 headerInfo.channel = channel;
 
                 byte duty = channel switch
@@ -124,7 +124,7 @@ namespace CatfortSound.SoundEngine.SongData
                 headerInfo.volume = 0;
                 headerInfo.tempo = (byte)Tempo;
 
-                exporter.AddChannel(headerInfo, channelData);
+                exporter.AddChannel(headerInfo, channelData, Subloops[(int)channel]);
             }
 
             return exporter.GetOutput();
@@ -214,6 +214,23 @@ namespace CatfortSound.SoundEngine.SongData
                 cumlulativeBytes.AddRange(item?.GetEntryBytes(getMode) ?? []);
             }
             return cumlulativeBytes.ToArray();
+        }
+
+        //I don't like it, but I need to do it for loops to work
+        private static List<byte[]> GetExportBytes(System.Collections.IList entryList)
+        {
+            List<byte[]> cumlulativeBytes = [];
+
+            for (int i = 0; i < entryList.Count; i++)
+            {
+                SequenceEntry? item = entryList[i] as SequenceEntry;
+                byte[]? entry = item?.GetEntryBytes(GetModes.export);
+                if(entry != null)
+                {
+                    cumlulativeBytes.Add(entry);
+                }
+            }
+            return cumlulativeBytes;
         }
 
     }

@@ -438,7 +438,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void AddEffect_Click(object sender, RoutedEventArgs e)
     {
         string newName = EffectTabs.SelectedItem.ToString() ?? "NewEffect";
-        EffectViewModels[EffectTabs.SelectedIndex].AddEffect(new EffectData(newName, (EffectTabs.SelectedIndex == 1 && EffectTabs.SelectedIndex == 2))); 
+        EffectViewModels[EffectTabs.SelectedIndex].AddEffect(new EffectModelData(newName, (EffectTabs.SelectedIndex == 1 && EffectTabs.SelectedIndex == 2))); 
     }
 
     private void RemoveEffect_Click(object sender, RoutedEventArgs e)
@@ -451,7 +451,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         if(sender is ListView view)
         {
-            UI_EffectEditor.EffectObject = ((ObservableCollection<EffectData>)view.ItemsSource)[view.SelectedIndex];
+            UI_EffectEditor.EffectObject = ((ObservableCollection<EffectModelData>)view.ItemsSource)[view.SelectedIndex];
         }
     }
 

@@ -25,6 +25,7 @@ using System.Windows.Controls;
 
 namespace CatfortSound.SoundEngine.Sequence
 {
+    //TODO: reorder so effect commands are contiguous 
     public enum Instructions
     {
         End = 0xA0,

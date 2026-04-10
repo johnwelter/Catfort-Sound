@@ -18,7 +18,7 @@ namespace CatfortSound.SoundEngine.Channels
 
         public virtual float GetVolume() => Effects.HasEffect(EffectStack.EffectSlots.kVol) ? Effects.GetEffectValue(EffectStack.EffectSlots.kVol) : m_channelVolume;
         public virtual int GetPitch() => Effects.HasEffect(EffectStack.EffectSlots.kArp) ? m_pitch + Effects.GetEffectValue(EffectStack.EffectSlots.kArp) : m_pitch;
-        public virtual int GetLengthTimer() => Effects.HasEffect(EffectStack.EffectSlots.kMod) ? (int)NoteTables.NoteTable[GetPitch()] + (sbyte)Effects.GetEffectValue(EffectStack.EffectSlots.kMod): (int)NoteTables.NoteTable[GetPitch()];
+        public virtual int GetLengthTimer() => Effects.HasEffect(EffectStack.EffectSlots.kMod) ? (int)NoteConstants.FreqTable[GetPitch()] + (sbyte)Effects.GetEffectValue(EffectStack.EffectSlots.kMod): (int)NoteConstants.FreqTable[GetPitch()];
         //public virtual float GetVolume() => 15f;
 
         public Oscilator() : base()
@@ -54,7 +54,7 @@ namespace CatfortSound.SoundEngine.Channels
             {
                 return 0;
             }
-            Clock(APUConstants.APU_CLOCKS_PER_SAMPLE, GetLengthTimer());
+            Clock(APU.APU_CLOCKS_PER_SAMPLE, GetLengthTimer());
             return CurrentSample;
         }
 

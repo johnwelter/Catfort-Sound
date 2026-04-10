@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static CatfortSound.SoundEngine.Effects.EffectStack;
 
 namespace CatfortSound.SoundEngine.Tracks
 {
@@ -125,7 +126,7 @@ namespace CatfortSound.SoundEngine.Tracks
             {
                 //this was the same note as the end of the loop - decrement the loop count
                 subLoopCounter--;
-                if (subLoopCounter < 0)
+                if (subLoopCounter <= 0)
                 {
                     //that was the last loop for this sub loop, increment the loop index, don't update the entry index
                     subLoopIndex++;
@@ -153,12 +154,13 @@ namespace CatfortSound.SoundEngine.Tracks
                 return;
             }
 
+            //TODO: the engine has these is bad places. we'll want to reorder them for an easier index catch
             switch (val)
             {
                 case (int)Instructions.VolEffect:
+                case (int)Instructions.DutyEffect:
                 case (int)Instructions.ModEffect:
                 case (int)Instructions.ArpEffect:
-                case (int)Instructions.DutyEffect:
                     ProcessEffect(val);
                     IncSeqIndex(2);
                     break;
@@ -166,17 +168,22 @@ namespace CatfortSound.SoundEngine.Tracks
         }
         public virtual void ProcessEffect(int val)
         {
-            Effect? effect = val switch
+            //TODO: the engine has these is bad places. we'll want to reorder them for an easier index catch
+            EffectSlots type = val switch
             {
-                (int)Instructions.VolEffect => new VolEffect(),
-                (int)Instructions.ModEffect => new ModEffect(),
-                (int)Instructions.ArpEffect => new ArpEffect(),
-                (int)Instructions.DutyEffect => new DutyEffect(),
+                (int)Instructions.VolEffect => EffectSlots.kVol,
+                (int)Instructions.DutyEffect => EffectSlots.kDuty,
+                (int)Instructions.ModEffect => EffectSlots.kMod,
+                (int)Instructions.ArpEffect => EffectSlots.kArp,
                 _ => throw new NotImplementedException()
             };
             int effectIdx = sequence[seqIndex + 1];
-            effect.SetEffectBytes(APU?.EffectsBank?.GetEffectByType(effect.GetType(), effectIdx) ?? []);
-            APU?.SetOscilatorEffect(effect, targetChannel);
+            Effect? effect = APU?.EffectsBank?.GetEffectByType((int)type, effectIdx);
+
+            if(effect != null)
+            {
+                APU?.SetOscilatorEffect(type, effect, targetChannel);
+            }
         }
         public virtual void ProcessNote(int note)
         {

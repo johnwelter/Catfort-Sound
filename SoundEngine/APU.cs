@@ -13,15 +13,43 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xaml.Schema;
+using static CatfortSound.SoundEngine.Effects.EffectStack;
 
 namespace CatfortSound.SoundEngine
 {
+    public enum ChannelIndexes
+    {
+        SQUARE_1,
+        SQUARE_2,
+        TRIANGLE,
+        NOISE,
+        DPMC,
+        //FDS
+    }
+    public enum Streams
+    {
+        MUSIC_SQ1,
+        MUSIC_SQ2,
+        MUSIC_TRI,
+        MUSIC_NOI,
+        MUSIC_DPMC,
+        //MUSIC_FDS
+    }
 
     public class APU
     {
+        public static readonly uint SAMPLE_RATE = 48000;
+        public static readonly short BITS_PER_SAMPLE = 16;
+        public static readonly float BASE_VOLUME = 0.35f;
+        public static readonly float AMPLITUDE_MAX = BASE_VOLUME * short.MaxValue;
+
+        public static readonly float CPU_Hz = 1789773f;
+        public static readonly float CPU_CLOCKS_PER_SAMPLE = 37.2869375f;
+        public static readonly float APU_CLOCKS_PER_SAMPLE = 18.64346875f;
+
         // Overall master volume settings of APU and application
         private float m_volume = 1.0f;
-        private float MasterVolume => m_volume * APUConstants.AMPLITUDE_MAX;
+        private float MasterVolume => m_volume * AMPLITUDE_MAX;
 
         // Mixer class for generating and mixing channel audio
         public Mixer? Mixer = new();
@@ -35,7 +63,7 @@ namespace CatfortSound.SoundEngine
 
         public APU()
         {
-            WaveOut.InitWODevice(APUConstants.SAMPLE_RATE, 1, (uint)APUConstants.BITS_PER_SAMPLE, false);
+            WaveOut.InitWODevice(SAMPLE_RATE, 1, (uint)BITS_PER_SAMPLE, false);
             DMCBank.InitDMCBanks();
             FDSBank.InitFDSBanks();
         }
@@ -54,7 +82,7 @@ namespace CatfortSound.SoundEngine
         // Called every tick, generates audio and outputs it to speakers in real time
         public bool Update(double deltaTime)
         {
-            int sampleCount = (int)(deltaTime / 1000f * APUConstants.SAMPLE_RATE);
+            int sampleCount = (int)(deltaTime / 1000f * SAMPLE_RATE);
             if (sampleCount == 0) { return false; }
 
             short[]? soundBuffer = GenerateSoundBuffer(sampleCount);
@@ -125,7 +153,7 @@ namespace CatfortSound.SoundEngine
             using (MemoryStream memoryStream = new MemoryStream())
             using (BinaryWriter binaryWriter = new BinaryWriter(memoryStream))
             {
-                short blockAlign = (short)(APUConstants.BITS_PER_SAMPLE / 8);
+                short blockAlign = (short)(BITS_PER_SAMPLE / 8);
                 int subChunkTwoSize = sampleCount * blockAlign;
                 binaryWriter.Write(new[] { 'R', 'I', 'F', 'F' });
                 binaryWriter.Write(36 + subChunkTwoSize);
@@ -133,10 +161,10 @@ namespace CatfortSound.SoundEngine
                 binaryWriter.Write(16);
                 binaryWriter.Write((short)1);
                 binaryWriter.Write((short)1);
-                binaryWriter.Write(APUConstants.SAMPLE_RATE);
-                binaryWriter.Write((int)APUConstants.SAMPLE_RATE * blockAlign);
+                binaryWriter.Write(SAMPLE_RATE);
+                binaryWriter.Write((int)SAMPLE_RATE * blockAlign);
                 binaryWriter.Write(blockAlign);
-                binaryWriter.Write(APUConstants.BITS_PER_SAMPLE);
+                binaryWriter.Write(BITS_PER_SAMPLE);
                 binaryWriter.Write(new[] { 'd', 'a', 't', 'a' });
                 binaryWriter.Write(subChunkTwoSize);
                 binaryWriter.Write(binaryWave);
@@ -168,12 +196,12 @@ namespace CatfortSound.SoundEngine
             }
         }
 
-        public void SetOscilatorEffect(Effect effect, int channel)
+        public void SetOscilatorEffect(EffectSlots slot, Effect effect, int channel)
         {
             Oscilator? oscilator = Channels[channel] as Oscilator;
             if (oscilator is not null)
             {
-                oscilator.Effects.SetEffect(effect);
+                oscilator.Effects.SetEffect(slot, effect);
             }
         }
 
@@ -191,7 +219,7 @@ namespace CatfortSound.SoundEngine
             int dmcIndex = sample >> 4;
             int pitch = sample & 15;
 
-            if ((byte)sample == 0xFF)
+            if (dmcIndex == (int)DMCSamples.kNone)
             {
                 return;
             }
@@ -201,17 +229,5 @@ namespace CatfortSound.SoundEngine
         }
 
         #endregion
-    }
-
-    class APUConstants
-    {
-        public static readonly uint SAMPLE_RATE = 48000;
-        public static readonly short BITS_PER_SAMPLE = 16;
-        public static readonly float BASE_VOLUME = 0.35f;
-        public static readonly float AMPLITUDE_MAX = BASE_VOLUME * short.MaxValue;
-
-        public static readonly float CPU_Hz = 1789773f;
-        public static readonly float CPU_CLOCKS_PER_SAMPLE = 37.2869375f;
-        public static readonly float APU_CLOCKS_PER_SAMPLE = 18.64346875f;
     }
 }

@@ -27,7 +27,7 @@ namespace CatfortSound.SoundEngine.Channels
         {
             if (m_pitch != NoteConstants.Rest && GetVolume() != 0)
             {
-                Clock(APUConstants.CPU_CLOCKS_PER_SAMPLE, GetLengthTimer());
+                Clock(APU.CPU_CLOCKS_PER_SAMPLE, GetLengthTimer());
             }
             return CurrentSample;
         }

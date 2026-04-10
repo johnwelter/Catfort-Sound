@@ -41,7 +41,7 @@ namespace CatfortSound.SoundEngine.Channels
         {
             if(byteIndex != -1 && LoadedSample != -1)
             {
-                Clock(APUConstants.CPU_CLOCKS_PER_SAMPLE, timerLut[m_samplePitch]);
+                Clock(APU.CPU_CLOCKS_PER_SAMPLE, timerLut[m_samplePitch]);
             }
             return CurrentSample;
         }

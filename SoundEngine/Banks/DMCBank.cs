@@ -8,7 +8,6 @@ namespace CatfortSound.SoundEngine.Banks
 {
     public enum DMCSamples
     {
-        kNone = -1,
         kEB0_Kick = 0,
         kEB0_Snare = 1,
         kSMB3_Tom = 2,
@@ -16,9 +15,10 @@ namespace CatfortSound.SoundEngine.Banks
         kSMB3_Kick = 4,
         kSMB3_Snare = 5,
         kSMB3_ETom = 6,
+        kNone = 7,
         //kSMB3_BongoB = 7,
         //kSMB3_BongoC = 7,
-        kSMB3_Timpani = 7,
+        //kSMB3_Timpani = 7,
     }
 
     public class DMCBank
@@ -382,7 +382,6 @@ namespace CatfortSound.SoundEngine.Banks
             SampleList.Add(SMB3_C);
             SampleList.Add(SMB3_D);
             SampleList.Add(SMB3_E);
-            SampleList.Add(SMB3_H);
         }
     }
 }

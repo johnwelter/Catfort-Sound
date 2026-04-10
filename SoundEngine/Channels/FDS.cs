@@ -37,7 +37,7 @@ namespace CatfortSound.SoundEngine.Channels
             {
                 return 0;
             }
-            Clock(APUConstants.CPU_CLOCKS_PER_SAMPLE, 0x080);
+            Clock(APU.CPU_CLOCKS_PER_SAMPLE, 0x080);
             return CurrentSample * 10f;
         }
 

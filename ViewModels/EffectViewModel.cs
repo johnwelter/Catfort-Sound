@@ -13,19 +13,19 @@ namespace CatfortSound.ViewModels
 {
     public class EffectViewModel
     {
-        public ObservableCollection<EffectData> EffectList { get; set; }
+        public ObservableCollection<EffectModelData> EffectList { get; set; }
 
         public EffectViewModel()
         {
-            EffectList = new ObservableCollection<EffectData>();
+            EffectList = new ObservableCollection<EffectModelData>();
         }
 
         public EffectViewModel(System.Collections.IList startList)
         {
-            EffectList = (ObservableCollection<EffectData>)startList;
+            EffectList = (ObservableCollection<EffectModelData>)startList;
         }
 
-        public void AddEffect(EffectData newData)
+        public void AddEffect(EffectModelData newData)
         {
             EffectList.Add(newData);
         }

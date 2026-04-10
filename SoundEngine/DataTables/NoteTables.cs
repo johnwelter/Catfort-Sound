@@ -12,24 +12,6 @@ using System.Threading.Tasks;
 
 namespace CatfortSound.SoundEngine.DataTables
 {
-    public enum ChannelIndexes
-    {
-        SQUARE_1 = 0,
-        SQUARE_2 = 1,
-        TRIANGLE = 2,
-        NOISE = 3,
-        DPMC = 4,
-        //FDS = 5,
-    }
-    public enum Streams
-    {
-        MUSIC_SQ1,
-        MUSIC_SQ2,
-        MUSIC_TRI,
-        MUSIC_NOI,
-        MUSIC_DPMC
-    }
-
     public enum Lengths
     {
         _ = 0x00,   //continue with no change
@@ -49,17 +31,6 @@ namespace CatfortSound.SoundEngine.DataTables
         t4 = 0x8D,
     }
 
-    public static class NoteConstants
-    {
-        public static int Rest = 0x5e;
-
-        public static float GetTicks(byte idx) => LenTable[idx - 0x80];
-        public static readonly float[] LenTable =
-        {
-            1, 2, 4, 8, 16, 32, 1 + 2, 2 + 4, 4 + 8, 8 + 16, 16 + 32, 4f/3f, 8f/3f, 16f/3f
-        };
-    }
-
     public enum Notes
     {
         rest = -1,
@@ -77,9 +48,18 @@ namespace CatfortSound.SoundEngine.DataTables
         GsAb = 0x0B,
     }
 
-    public static class NoteTables
+    public static class NoteConstants
     {
-        public static readonly uint[] NoteTable =
+        //so we can replace the rest from the notes enum - needs to stay -1 there to avoid offsets with octaves
+        public static int Rest = 0x5e;
+
+        public static float GetTicks(byte idx) => LenTable[idx - 0x80];
+        public static readonly float[] LenTable =
+        {
+            1, 2, 4, 8, 16, 32, 1 + 2, 2 + 4, 4 + 8, 8 + 16, 16 + 32, 4f/3f, 8f/3f, 16f/3f
+        };
+
+        public static readonly uint[] FreqTable =
         {
             // A    As/Bf    B      C    Cs/Df    D    Ds/Ef    E      F    Fs/Gf    G    Gs/Af
             0x7F1, 0x780, 0x713, 0x6AD, 0x64D, 0x5F3, 0x59D, 0x54D, 0x500, 0x4B8, 0x475, 0x435,
@@ -92,20 +72,4 @@ namespace CatfortSound.SoundEngine.DataTables
             0x00F, 0x00E, 0x00D, 0x00C, 0x00C, 0x00B, 0x00A, 0x00A, 0x009, 0x008, 0x000
         };
     }
-
-    public struct DMCNote
-    {
-        //pitch
-        public DMCSamples Sample;
-        public int DMCPitch;
-        public int TickLengh;
-
-        public DMCNote(DMCSamples sample, int pitch, int tickLength)
-        {
-            Sample = sample;
-            DMCPitch = pitch;
-            TickLengh = tickLength;
-        }
-    }
-
 }
