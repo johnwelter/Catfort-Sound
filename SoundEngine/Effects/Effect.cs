@@ -97,12 +97,12 @@ namespace CatfortSound.SoundEngine.Effects
                 {
                     m_ticks = 0;
                 }
-                else if(val == LOOP_ALL(centered))
+                else if(val == LOOP_PART(centered))
                 {
                     IncTicks();
                     m_ticks -= GetEffectValue(m_ticks);
                 }
-                else if(val == LOOP_ALL(centered))
+                else if(val == HOLD_CURRENT(centered))
                 {
                     IncTicks();
                     holdtimer = GetEffectValue(m_ticks);

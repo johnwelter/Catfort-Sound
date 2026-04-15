@@ -279,7 +279,7 @@ namespace CatfortSound.SoundEngine.SongData
         public override void BuildByteList(in List<byte> bytes, GetModes getMode = GetModes.playback)
         {
             base.BuildByteList(bytes, getMode);
-            bytes.Add(Pitch == -1 ? (byte)17 : (byte)Pitch);
+            bytes.Add(Pitch == -1 ? NoteConstants.NoiseRest : (byte)Pitch);
         }
     }
 

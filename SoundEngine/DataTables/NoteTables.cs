@@ -52,6 +52,8 @@ namespace CatfortSound.SoundEngine.DataTables
     {
         //so we can replace the rest from the notes enum - needs to stay -1 there to avoid offsets with octaves
         public static int Rest = 0x5e;
+        //noise rests need to use the unused bit on the upper nibble
+        public static byte NoiseRest = 0x20;
 
         public static float GetTicks(byte idx) => LenTable[idx - 0x80];
         public static readonly float[] LenTable =

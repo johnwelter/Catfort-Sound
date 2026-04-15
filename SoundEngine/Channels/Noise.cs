@@ -1,4 +1,5 @@
-﻿using CatfortSound.SoundEngine.Effects;
+﻿using CatfortSound.SoundEngine.DataTables;
+using CatfortSound.SoundEngine.Effects;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -22,7 +23,7 @@ namespace CatfortSound.SoundEngine.Channels
         public override void SetPitch(int pitch)
         {
             base.SetPitch(pitch);
-            if(pitch >= 17)
+            if(pitch >= NoteConstants.NoiseRest)
             {
                 m_pitch = -1;
             }

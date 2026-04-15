@@ -19,6 +19,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Xml;
+using Avalonia.Platform.Storage;
 using CatfortSound.SoundEngine;
 using CatfortSound.SoundEngine.Banks;
 using CatfortSound.SoundEngine.DataTables;
@@ -46,7 +47,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private double m_deltaTime;
     private double m_timeLastFrame;
     private double m_frameTimer;
-    private APU AudioProcessor = new();
+    private APU APU = new();
     private Sequencer Sequencer;
 
     const double frameTime = 16.67;
@@ -66,6 +67,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public object[] TrackViewModels = new object[5]; 
     public DataGrid[] TrackerLists = new DataGrid[5];
     public DataGrid[] LoopLists = new DataGrid[5];
+    public ComboBox[] DelayDropdowns = new ComboBox[5];
 
     public EffectViewModel[] EffectViewModels = new EffectViewModel[4]; 
     public ListView[] EffectLists = new ListView[4];
@@ -108,7 +110,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
 
         InitializeComponent();
-        Sequencer = new Sequencer(AudioProcessor);
+        Sequencer = new Sequencer(APU);
         InitAudioUpdate();
         CompositionTarget.Rendering += RenderUpdate;
 
@@ -130,10 +132,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         TrackViewModels[3] = new EntryViewModel<NoiseEntry>(Sequencer.SongChart.Channels[3]);
         TrackViewModels[4] = new EntryViewModel<DMCEntry>(Sequencer.SongChart.Channels[4]);
 
-        EffectViewModels[0] = new EffectViewModel(AudioProcessor.EffectsBank.VolumeEffects);
-        EffectViewModels[1] = new EffectViewModel(AudioProcessor.EffectsBank.ModularEffects);
-        EffectViewModels[2] = new EffectViewModel(AudioProcessor.EffectsBank.ArpeggioEffects);
-        EffectViewModels[3] = new EffectViewModel(AudioProcessor.EffectsBank.DutyCycleEffects);
+        EffectViewModels[0] = new EffectViewModel(APU.EffectsBank.VolumeEffects);
+        EffectViewModels[1] = new EffectViewModel(APU.EffectsBank.ModularEffects);
+        EffectViewModels[2] = new EffectViewModel(APU.EffectsBank.ArpeggioEffects);
+        EffectViewModels[3] = new EffectViewModel(APU.EffectsBank.DutyCycleEffects);
 
         EffectLists[0] = VolEffectList;
         EffectLists[1] = ModEffectList;
@@ -152,6 +154,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         TrackerLists[3] = nGrid;
         TrackerLists[4] = dmcGrid;
 
+        DelayDropdowns[0] = UI_Sq1_delayDropDown;
+        DelayDropdowns[1] = UI_Sq2_delayDropDown;
+        DelayDropdowns[2] = UI_Tri_delayDropDown;
+        DelayDropdowns[3] = UI_Noi_delayDropDown;
+        DelayDropdowns[4] = UI_DMC_delayDropDown;
+
         //EffectLists[0] = 
 
         HookupMVVM();
@@ -164,7 +172,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         for(int i = 0; i < volumeSliders.Count; i++)
         {
-            AudioProcessor.Mixer?.SetChannelMixerVolume(i, (float)volumeSliders[i].Value);
+            APU.Mixer?.SetChannelMixerVolume(i, (float)volumeSliders[i].Value);
         }
 
         play_button.IsEnabled = IsPlayEnabled;
@@ -196,7 +204,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 FrameUpdate();
             }
 
-            if(AudioProcessor.Update(m_deltaTime))
+            if(APU.Update(m_deltaTime))
             {
                 m_timeLastFrame = timeThisFrame;
             }
@@ -206,7 +214,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     void FrameUpdate()
     {
-        AudioProcessor.FrameUpdate();
+        APU.FrameUpdate();
         Sequencer.TickSequence();
     }
 
@@ -218,19 +226,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             BindToGrid?.Invoke(TrackViewModels[i], new object[] { TrackerLists[i] });
 
             LoopLists[i].ItemsSource = Sequencer.SongChart.Subloops[i];
+            DelayDropdowns[i].DataContext = Sequencer.SongChart.ChannelSettings[i];
+
         }
 
         for(int i = 0; i < EffectViewModels.Length; i++)
         {
             EffectLists[i].ItemsSource = EffectViewModels[i].EffectList;
         }
+
+
         
     }
 
     private void play_button_Click(object sender, RoutedEventArgs e)
     {
         AudioActive = true;
-        AudioProcessor.Reset();
+        APU.Reset();
         Sequencer.Reset();
         Sequencer.SongChart.LockTempo();
 
@@ -332,7 +344,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             exportPath = saveFileDialog.FileName;
 
-            string output = Sequencer.SongChart.GenerateExportFile(currentFileName);
+            string output = Sequencer.SongChart.GenerateExportFile(System.IO.Path.GetFileNameWithoutExtension(exportPath));
 
             System.IO.File.WriteAllText(exportPath, output);
         }
@@ -466,6 +478,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void Toolbar_ExportEffects(object sender, RoutedEventArgs e)
     {
+        OpenFolderDialog openFolderDialog = new OpenFolderDialog();
+        openFolderDialog.Title = "Select Effect Folder";
+        if (openFolderDialog.ShowDialog() == true)
+        {
+            exportPath = openFolderDialog.FolderName;
+
+            for(int i = 0; i < 4; i++)
+            {
+                (string tables, string indicies) = APU.EffectsBank.GenerateExportFile(i, out string fileName);
+                System.IO.File.WriteAllText($"{exportPath}/{fileName}.asm", tables);
+                System.IO.File.WriteAllText($"{exportPath}/{fileName}_idx.asm", indicies);
+            }
+
+        }
 
     }
 

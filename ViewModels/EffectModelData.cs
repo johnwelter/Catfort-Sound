@@ -129,7 +129,7 @@ namespace CatfortSound.ViewModels
             }
             else
             {
-                if (LoopPoint == Length - 1 || LoopPoint == -1 || LoopPoint > Length)
+                if ((Length > 1 && LoopPoint == Length - 1) || LoopPoint == -1 || LoopPoint > Length)
                 {
                     //loop last
                     LoopDetails.Add(Effect.LOOP_LAST(Centered));

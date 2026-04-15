@@ -36,7 +36,8 @@ namespace CatfortSound.SoundEngine.Tracks
 
         public void Reset()
         {
-            ticksRemaining = 0;
+            Lengths delayLength = Sequencer?.SongChart?.ChannelSettings[targetChannel].DelayLength ?? Lengths._;
+            ticksRemaining = (int)delayLength == 0 ? 0 : (int)(NoteConstants.GetTicks((byte)delayLength)) + 1;
             tickTime = 0;
             seqIndex = -1;
             entryIndex = -1;

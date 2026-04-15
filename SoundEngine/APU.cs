@@ -40,7 +40,7 @@ namespace CatfortSound.SoundEngine
     {
         public static readonly uint SAMPLE_RATE = 48000;
         public static readonly short BITS_PER_SAMPLE = 16;
-        public static readonly float BASE_VOLUME = 0.35f;
+        public static readonly float BASE_VOLUME = 0.50f;
         public static readonly float AMPLITUDE_MAX = BASE_VOLUME * short.MaxValue;
 
         public static readonly float CPU_Hz = 1789773f;

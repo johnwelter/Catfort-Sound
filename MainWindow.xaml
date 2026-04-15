@@ -5,6 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CatfortSound"
         xmlns:views="clr-namespace:CatfortSound.ViewModels"
+        xmlns:tables="clr-namespace:CatfortSound.SoundEngine.DataTables"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         Title="Catfort Sound
         " Height="832" Width="909"
@@ -17,6 +19,13 @@
         <ContextMenu x:Key="OscContext">
             
         </ContextMenu>
+
+        <ObjectDataProvider x:Key="dataFromEnum" MethodName="GetValues"
+                            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="tables:Lengths"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
         
     </Window.Resources>
     <Grid >
@@ -102,6 +111,10 @@
                 <TabControl x:Name="tabControl">
                     <TabItem Header="Square1">
                         <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
+                            <StackPanel x:Name="UI_Sq1_DelaySection" Orientation="Horizontal">
+                                <Label x:Name="UI_Sq1_delayLabel" Content="ChannelDelay"/>
+                                <ComboBox x:Name="UI_Sq1_delayDropDown"  ItemsSource="{Binding Source={StaticResource dataFromEnum}}" SelectedItem="{Binding DelayLength}"/>
+                            </StackPanel>
                             <ScrollViewer Height="500">
                                 <StackPanel>
                                     <DataGrid x:Name="p1Grid" CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}">
@@ -122,6 +135,10 @@
                     </TabItem>
                     <TabItem Header="Square2">
                         <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
+                            <StackPanel x:Name="UI_Sq2_DelaySection" Orientation="Horizontal">
+                                <Label x:Name="UI_Sq2_delayLabel" Content="ChannelDelay"/>
+                                <ComboBox x:Name="UI_Sq2_delayDropDown" ItemsSource="{Binding Source={StaticResource dataFromEnum}}" SelectedItem="{Binding DelayLength}"/>
+                            </StackPanel>
                             <ScrollViewer Height="500">
                                 <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
                                     <DataGrid x:Name="p2Grid" CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}">
@@ -142,6 +159,10 @@
                     </TabItem>
                     <TabItem Header="Triangle">
                         <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
+                            <StackPanel x:Name="UI_Tri_DelaySection" Orientation="Horizontal">
+                                <Label x:Name="UI_Tri_delayLabel" Content="ChannelDelay"/>
+                                <ComboBox x:Name="UI_Tri_delayDropDown" ItemsSource="{Binding Source={StaticResource dataFromEnum}}" SelectedItem="{Binding DelayLength}"/>
+                            </StackPanel>
                             <ScrollViewer Height="500">
                                 <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
                                     <DataGrid x:Name="tGrid"  CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}">
@@ -162,6 +183,10 @@
                     </TabItem>
                     <TabItem Header="Noise">
                         <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
+                            <StackPanel x:Name="UI_Noi_DelaySection" Orientation="Horizontal">
+                                <Label x:Name="UI_Noi_delayLabel" Content="ChannelDelay"/>
+                                <ComboBox x:Name="UI_Noi_delayDropDown" ItemsSource="{Binding Source={StaticResource dataFromEnum}}" SelectedItem="{Binding DelayLength}"/>
+                            </StackPanel>
                             <ScrollViewer Height="500">
                                 <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
                                     <DataGrid x:Name="nGrid"  CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}"/>
@@ -176,6 +201,10 @@
                     </TabItem>
                     <TabItem Header="DMC">
                         <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
+                            <StackPanel x:Name="UI_DMC_DelaySection" Orientation="Horizontal">
+                                <Label x:Name="UI_DMC_delayLabel" Content="ChannelDelay"/>
+                                <ComboBox x:Name="UI_DMC_delayDropDown" ItemsSource="{Binding Source={StaticResource dataFromEnum}}" SelectedItem="{Binding DelayLength}"/>
+                            </StackPanel>
                             <ScrollViewer Height="500">
                                 <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
                                     <DataGrid x:Name="dmcGrid"  CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}"/>

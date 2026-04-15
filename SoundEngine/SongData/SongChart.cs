@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -49,6 +50,15 @@ namespace CatfortSound.SoundEngine.SongData
             new ObservableCollection<Subloop>(),
         ];
 
+        public ObservableCollection<ChannelSettings> ChannelSettings =
+        [
+            new(),
+            new(),
+            new(),
+            new(),
+            new(),
+        ];
+
         public event PropertyChangedEventHandler? PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string propertyName = "")
         {
@@ -86,6 +96,7 @@ namespace CatfortSound.SoundEngine.SongData
             SerializedChart.Add((byte)Tempo);
             for (int i = 0; i < Channels.Length; i++)
             {
+                SerializedChart.Add((byte)ChannelSettings[i].DelayLength);
                 SerializedChart.AddRange(BitConverter.GetBytes(GetChannelLength(i)));
                 SerializedChart.AddRange(GetChannelBytes(Channels[i], GetModes.save));
                 SerializedChart.AddRange(BitConverter.GetBytes(Subloops[i].Count));
@@ -99,9 +110,9 @@ namespace CatfortSound.SoundEngine.SongData
 
         public string GenerateExportFile(string songName)
         {
-            Exporter exporter = new(songName);
+            ExportSong exSong = new();
 
-            exporter.InitExport((byte)Channels.Length);
+            exSong.Init(songName);
 
             foreach (ChannelIndexes channel in Enum.GetValues(typeof(ChannelIndexes)))
             {
@@ -124,10 +135,10 @@ namespace CatfortSound.SoundEngine.SongData
                 headerInfo.volume = 0;
                 headerInfo.tempo = (byte)Tempo;
 
-                exporter.AddChannel(headerInfo, channelData, Subloops[(int)channel]);
+                exSong.AddChannel(headerInfo, channelData, Subloops[(int)channel], ChannelSettings[(int)channel]);
             }
 
-            return exporter.GetOutput();
+            return exSong.GetOutput();
         }
 
         public int GetNextInt(byte[] buffer, ref int index)
@@ -152,6 +163,11 @@ namespace CatfortSound.SoundEngine.SongData
             Tempo = buffer[0];
             for (int i = 0; i < Channels.Length; i++)
             {
+
+                ChannelSettings[i].DelayLength = Lengths._;
+                ChannelSettings[i].DelayLength = (Lengths)buffer[bufferIdx];
+                bufferIdx++;
+                
                 //chunk 1 = tracker data
                 chunkLength = GetNextInt(buffer, ref bufferIdx) * widths[i];
                 byte[] chunkArray = new byte[chunkLength];
