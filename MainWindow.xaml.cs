@@ -42,7 +42,6 @@ namespace CatfortSound;
 /// </summary>
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
-
     public Stopwatch Time = new Stopwatch();
     private double m_deltaTime;
     private double m_timeLastFrame;
@@ -467,6 +466,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
+    private void Track_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+
+    }
+
+    private void Tab_changed(object sender, SelectionChangedEventArgs e)
+    {
+        if(e.Source is TabControl control)
+        {
+            UI_currentIdxLabel.DataContext = TrackerLists[control.SelectedIndex];
+            
+        }
+    }
+
     private void Toolbar_OpenEffects(object sender, RoutedEventArgs e)
     {
 
@@ -494,6 +507,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
     }
+
+
 
     //private void p1Grid_MouseMove(object sender, MouseEventArgs e)
     //{

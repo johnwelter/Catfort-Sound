@@ -104,11 +104,12 @@
                         <TextBox x:Name="tempo" Text="{Binding Tempo}" PreviewTextInput="Tempo_Validate" Width="42" VerticalAlignment="Center"/>
                         <Label x:Name="framesPerLabel" Content="Tick add per frame (tempo)"/>
                     </StackPanel>
+                    <Label x:Name="UI_currentIdxLabel" Content="{Binding SelectedIndex, FallbackValue=--}"/>
                 </StackPanel>
             </StackPanel>
             <!-- Tracker Lists -->
             <DockPanel x:Name="UI_TrackerDock">
-                <TabControl x:Name="tabControl">
+                <TabControl x:Name="tabControl" SelectionChanged="Tab_changed">
                     <TabItem Header="Square1">
                         <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
                             <StackPanel x:Name="UI_Sq1_DelaySection" Orientation="Horizontal">
@@ -117,7 +118,7 @@
                             </StackPanel>
                             <ScrollViewer Height="500">
                                 <StackPanel>
-                                    <DataGrid x:Name="p1Grid" CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}">
+                                    <DataGrid x:Name="p1Grid" CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}" SelectionChanged="Track_SelectionChanged">
                                         <DataGrid.ContextMenu>
                                             <ContextMenu>
                                                 <MenuItem Header="Transpose..." Click="Transpose"/>
@@ -141,7 +142,7 @@
                             </StackPanel>
                             <ScrollViewer Height="500">
                                 <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
-                                    <DataGrid x:Name="p2Grid" CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}">
+                                    <DataGrid x:Name="p2Grid" CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}" SelectionChanged="Track_SelectionChanged">
                                         <DataGrid.ContextMenu>
                                             <ContextMenu>
                                                 <MenuItem Header="Transpose..." Click="Transpose"/>
@@ -165,7 +166,7 @@
                             </StackPanel>
                             <ScrollViewer Height="500">
                                 <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
-                                    <DataGrid x:Name="tGrid"  CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}">
+                                    <DataGrid x:Name="tGrid"  CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}" SelectionChanged="Track_SelectionChanged">
                                         <DataGrid.ContextMenu>
                                             <ContextMenu>
                                                 <MenuItem Header="Transpose..." Click="Transpose"/>
@@ -189,7 +190,7 @@
                             </StackPanel>
                             <ScrollViewer Height="500">
                                 <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
-                                    <DataGrid x:Name="nGrid"  CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}"/>
+                                    <DataGrid x:Name="nGrid"  CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}" SelectionChanged="Track_SelectionChanged"/>
                                 </StackPanel>
                             </ScrollViewer>
                             <ScrollViewer Height="500">
@@ -207,7 +208,7 @@
                             </StackPanel>
                             <ScrollViewer Height="500">
                                 <StackPanel Orientation="Vertical" Background="#FFE5E5E5">
-                                    <DataGrid x:Name="dmcGrid"  CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}"/>
+                                    <DataGrid x:Name="dmcGrid"  CanUserSortColumns="False" PreviewKeyDown="Copy" ItemsSource="{Binding Entries}" SelectionChanged="Track_SelectionChanged"/>
                                 </StackPanel>
                             </ScrollViewer>
                             <ScrollViewer Height="100">
